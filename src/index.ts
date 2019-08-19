@@ -35,6 +35,10 @@ function head(tail: Tail) {
   return tail.dots[tail.dots.length - 1];
 }
 
+function v2Round(v:V2):V2{
+  return [Math.round(v[0]), Math.round(v[1])];
+}
+
 function min<T>(list: T[], fn: (T) => number) {
   let res = list.reduce(
     (prev, item, i) => {
@@ -92,10 +96,10 @@ function drawTail(t: Tail, style: (t: Tail, i: number) => void) {
     let next = dots[i];
     let prev = dots[i - 1];
     ctx.beginPath();
-    ctx.moveTo(...prev);
+    ctx.moveTo(...v2Round(prev));
     ctx.lineCap = "round";
     style(t, i);
-    ctx.lineTo(...next);
+    ctx.lineTo(...v2Round(next));
     ctx.stroke();
   }
 }
@@ -124,7 +128,10 @@ function moveSnake(mouseAt) {
 
 function moveFoe(foe: Foe) {
   let next = v2Sum(foe.at, foe.speed);
-  if (next[0] < 100 || next[0] >= width - 100) foe.speed[0] = -foe.speed[0];
+  if (next[0] < 100 || next[0] >= width - 100) {
+    foe.speed[0] = -foe.speed[0];
+    next[1] += 20;
+  }
   foe.at = next;
   return foe.at[1] <= height - 100;
 }
@@ -214,16 +221,20 @@ function draw() {
   for (let shot of shots) {
     drawTail(shot.tail, (t, i) => {
       ctx.lineWidth = 2;
-      let brightnes = Math.min(230, i / shot.tail.dots.length * 300);
+      let brightnes = Math.min(230, i / shot.tail.dots.length * 200);
       ctx.strokeStyle = `rgb(${brightnes},${brightnes},${brightnes})`;
     });
+    let end = head(shot.tail)
+    ctx.strokeStyle = "#fdfdfd";
+    ctx.fillStyle = "#fdfdfd";
+    ctx.fillRect(Math.round(end[0])-1, Math.round(end[1])-1, 2, 2);
   }
 
   let r = 10;
   for (let foe of foes) {
     ctx.strokeStyle = "#ff0000";
     ctx.fillStyle = "#ff0000";
-    ctx.fillRect(foe.at[0] - r, foe.at[1] - r, 2 * r, 2 * r);
+    ctx.fillRect(Math.round(foe.at[0]) - r, Math.round(foe.at[1] - r), 2 * r, 2 * r);
   }
 
   drawTail(snake, (t, i) => {
@@ -240,7 +251,7 @@ function draw() {
 function spawnFoe() {
   foes.push({
     at: [width * (Math.random() * 0.5 + 0.25), 20],
-    speed: [2, 0.2]
+    speed: [2, 0]
   });
 }
 
