@@ -1,5 +1,6 @@
 import Game from "./Game";
 import { V2, v2Sum } from "./Util";
+import {explosion} from "./Sound"
 
 class Particle {
   speed: V2;
@@ -22,7 +23,11 @@ export default class Explosion {
       let speed = Math.random();
       p.speed = [Math.cos(angle) * speed, Math.sin(angle) * speed]
     }
+
+    explosion()
+
     game.sfx.push(this);
+
   }
 
   move(){

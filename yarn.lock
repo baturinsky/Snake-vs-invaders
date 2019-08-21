@@ -875,6 +875,11 @@ jsfx@^0.0.1:
   resolved "https://registry.yarnpkg.com/jsfx/-/jsfx-0.0.1.tgz#bb65f7c173d135efc31ee665bb3b5f45aa10fced"
   integrity sha1-u2X3wXPRNe/DHuZluztfRaoQ/O0=
 
+jsfxr@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/jsfxr/-/jsfxr-0.0.1.tgz#722b1b5c8e2a8ad18b14fb0a0bab7610a344165a"
+  integrity sha1-cisbXI4qitGLFPsKC6t2EKNEFlo=
+
 json-parse-better-errors@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/json-parse-better-errors/-/json-parse-better-errors-1.0.2.tgz#bb867cfb3450e69107c131d1c514bab3dc8bcaa9"

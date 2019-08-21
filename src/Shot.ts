@@ -1,12 +1,11 @@
 import { V2, dist, v2Round, v2Sum, min } from "./Util";
 import Tail from "./Tail";
 import Game from "./Game";
+import {bounce} from "./Sound"
 
 const shotLength = 30;
 const shotDots = 5;
 let shotSpeed = 2;
-
-let actx = new AudioContext();
 
 export default class Shot{
   tail: Tail;
@@ -56,18 +55,7 @@ export default class Shot{
   
           let vec = [capture.data[0], capture.data[1]].map(a => a / 100 - 1.5);
   
-          let peep = actx.createOscillator();
-          peep.type = "sawtooth";
-          peep.frequency.value = 200;
-          let gain = actx.createGain();
-          gain.gain.value = 0.1;
-          gain.gain.exponentialRampToValueAtTime(0.00001, actx.currentTime + 0.1);
-          peep.connect(gain).connect(actx.destination);
-  
-          peep.start();
-          setTimeout(t => {
-            peep.stop();
-          }, 50);
+          bounce(this.tail.head);
   
           let surfaceAngle = Math.atan2(vec[1], vec[0]);
           let dropAngle = Math.atan2(tail.speed[1], tail.speed[0]);

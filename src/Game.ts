@@ -23,7 +23,7 @@ export default class Game{
   ctx: CanvasRenderingContext2D;
   ctb: CanvasRenderingContext2D;
   mouseAt: V2;
-  realtime = true;
+  realtime = false;
   
  
   init() {

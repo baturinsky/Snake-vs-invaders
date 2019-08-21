@@ -2,7 +2,6 @@ import { V2, dist, v2Round, v2Sum, min } from "./Util";
 import Game from "./Game";
 import Explosion from "./Explosion";
 
-
 export default class Foe {
   at: V2;
   speed: V2;
@@ -59,7 +58,7 @@ export default class Foe {
   
   destroy() {
     this.dying = 0.01;
-    new Explosion(this.game, this.at);
+    new Explosion(this.game, this.at);    
     console.log(this.at);
   }  
   

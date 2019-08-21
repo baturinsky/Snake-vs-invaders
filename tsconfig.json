@@ -4,6 +4,7 @@
     "allowSyntheticDefaultImports": true,
     "module": "esNext",
     "target": "es6",
+    "allowJs": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "typeRoots": [
