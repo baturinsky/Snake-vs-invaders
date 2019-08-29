@@ -2,7 +2,7 @@ import svelte from "rollup-plugin-svelte";
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
 //import livereload from 'rollup-plugin-livereload';
-import sourceMaps from "rollup-plugin-sourcemaps";
+//import sourceMaps from "rollup-plugin-sourcemaps";
 import typescript from "rollup-plugin-typescript2";
 import { terser } from "rollup-plugin-terser";
 
@@ -12,7 +12,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      sourcemap: true,
+      sourcemap: false,
       format: "iife",
       name: "app",
       file: "public/bundle.js"
@@ -35,7 +35,7 @@ export default [
 
       production && terser(),
 
-      sourceMaps()
+      //sourceMaps()
     ],
     watch: {
       clearScreen: false
