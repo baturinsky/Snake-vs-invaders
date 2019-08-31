@@ -7,7 +7,7 @@ type wingConf = {
   rows: number;
   cols: number;
   kind: number;
-  special?: string;
+  complication?: number;
 
   init: (
     wing,
@@ -24,25 +24,22 @@ function formation(wing: Wing, i: number) {
   let conf = wing.conf;
   let col = i % conf.cols;
   let row = Math.floor(i / conf.cols);
-  let gap = Math.min(40, (wing.game.width - 200) / conf.cols )
-  let base =
-    wing.ind % 2 ? wing.game.width - 100 - conf.cols * gap : 100;
+  let gap = Math.min(40, (wing.game.width - 200) / conf.cols);
+  let base = wing.ind % 2 ? wing.game.width - 100 - conf.cols * gap : 100;
   let kind = conf.kind;
-  if (
-    conf.special == "walled" &&
-    kind == 1 &&
-    row == conf.rows - 1
-  )
-    kind = Foe.WALL;
-  return {
-    at: [
-      col * gap + base,
-      20 - 40 * conf.rows + row * 40
-    ] as V2,
+  let lastRow = row == conf.rows - 1;
+  if (conf.complication == Wing.WALL && lastRow) kind = Foe.WALL;
+
+  let foeConf = {
+    at: [col * gap + base, 20 - 40 * conf.rows + row * 40] as V2,
     vel: [wing.ind % 2 ? -10 : 10, 30] as V2,
     shields: 0,
     kind: kind
   };
+
+  if (conf.complication == Wing.SHIELD) foeConf.shields = 1;
+
+  return foeConf;
 }
 
 function centered(wing: Wing, i: number) {
@@ -61,11 +58,30 @@ function formationFire(beat: number, foe: Foe) {
   let conf = foe.wing.conf;
   if (
     beat % (conf.rows + 1) == conf.rows ||
-    Math.floor(foe.order / conf.cols) ==
-      conf.rows - (beat % (conf.rows + 1))
+    Math.floor(foe.order / conf.cols) == conf.rows - (beat % (conf.rows + 1))
   ) {
     foe.shoot();
   }
+}
+
+function randomFire(beat: number, foe: Foe) {
+  if(foe.game.rni() % 4){
+    foe.game.delayed(foe.game.beatLength * foe.game.rnf(), () => foe.shoot())
+  }
+}
+
+function continuousFire(beat: number, foe: Foe) {
+  if(beat%4){
+    foe.game.delayed(foe.game.beatLength * 2 * foe.order / foe.wing.size, () => foe.shoot())
+  }
+}
+
+
+function doNothing(beat: number, foe: Foe) {
+}
+
+function beat2Fire(beat: number, foe: Foe) {
+  if (beat % 2 == 0) foe.shoot();
 }
 
 function forwardAndBack(foe: Foe) {
@@ -100,39 +116,98 @@ export default class Wing {
   conf: wingConf;
   beat = 0;
 
+  static readonly W2X = 1;
+  static readonly H2X = 2;
+  static readonly PHALANX = 3;
+  static readonly MIRAGE = 4;
+  static readonly WALL = 5;
+  static readonly SHIELD = 6;
+  static readonly CONTINUOUS = 7;
+  static readonly RANDOM = 8;
+
+  static readonly phalanxUnlocks = [
+    0,
+    Wing.H2X,
+    Wing.WALL,
+    Wing.MIRAGE,
+    Wing.SHIELD,
+    Wing.W2X,
+    Wing.RANDOM,
+    Wing.CONTINUOUS
+  ];
+  static readonly skirmishUnlocks = [
+    Foe.SNIPE,
+    Foe.FAN,
+    Foe.WALL,
+    Foe.STEALTH,
+    Foe.SHIELD,
+    Foe.SPAWN,
+    Foe.CHASE,
+    Foe.COMM
+  ];
+
   get size() {
     return this.conf.cols * this.conf.rows;
   }
 
-  constructor(public game: Game, public ind: number) {
-    if (ind >= 0) {
+  constructor(
+    public game: Game,
+    public ind: number,
+    public skirmisher: boolean
+  ) {
+    if (skirmisher) {
       this.conf = {
-        cols: 6,
+        cols: 1,
+        rows: 1,
+        kind: randomElement(
+          Wing.skirmishUnlocks.slice(0, game.stage),
+          game.rni
+        ),
+        init: centered,
+        foeBeat: beat2Fire,
+        foeThink: forwardAndBack
+      };
+      if (this.conf.kind == Foe.CHASE) this.conf.foeThink = stopAtBorder;
+    } else {
+      this.conf = {
+        cols: 4 + Math.floor(game.complication / 4),
         rows: 3,
-        kind: 1,
+        kind: Foe.PAWN,
         init: formation,
         foeBeat: formationFire,
         foeThink: forwardAndBack
       };
-      if (ind % 5 == 5) {
-        this.conf.special = "armored";
+      if (game.complicatedPhalanx()) {
+        this.conf.complication = randomElement(
+          Wing.phalanxUnlocks.slice(0, game.stage),
+          game.rni
+        );
+        
+        switch (this.conf.complication) {
+          case Wing.H2X:
+            this.conf.rows *= 2;
+            break;
+          case Wing.W2X:
+            this.conf.rows *= 2;
+            break;
+          case Wing.RANDOM:
+            this.conf.foeBeat = randomFire;
+            break;
+          case Wing.CONTINUOUS:
+            this.conf.foeBeat = continuousFire;
+            break;    
+          case Wing.PHALANX:
+            this.conf.cols *= this.conf.rows;
+            this.conf.rows = 1;
+            break;
+          }
       }
-      if (this.conf.kind == Foe.MIRAGE)
-        this.foes[Math.floor(Math.random() * this.size)].special = 1;
-    } else {
-      this.conf = {
-        cols: 1,
-        rows: 1,
-        kind:
-          randomElement([Foe.SPAWN, Foe.FAN, Foe.SNIPE, Foe.BOMB, Foe.CHASE], game.rni),
-        init: centered,
-        foeBeat: formationFire,
-        foeThink: forwardAndBack
-      };
-      if (this.conf.kind == Foe.CHASE) this.conf.foeThink = stopAtBorder;
     }
 
     this.init(this.size, this.conf.init);
+
+    if (this.conf.kind == Foe.MIRAGE)
+      randomElement(this.foes, game.rni).special = 1;
   }
 
   init(n: number, f: (wing, number) => any) {
@@ -143,7 +218,7 @@ export default class Wing {
     console.log(this);
   }
 
-  onBeat(beat: number) {
+  onBeat() {
     this.foes.forEach(foe => this.conf.foeBeat(this.beat, foe));
     this.beat++;
   }

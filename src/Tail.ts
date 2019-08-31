@@ -105,7 +105,7 @@ export default class Tail {
   }
 
   loseHead() {
-    if(this.dots.length >=3){
+    if(this.dots.length >= 3){
       this.dots.pop();
       this.updateLength();
     }

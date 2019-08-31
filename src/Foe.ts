@@ -5,10 +5,11 @@ import Explosion from "./Explosion";
 import Shot from "./Shot";
 import Wing from "./Wing";
 import CirclePop from "./CirclePop";
+import {bubble as bubbleSfx} from "./Sound"
 
 let dyingDuration = 0.5;
 
-let chargeTimes = { 4: 3, 8: 4 };
+let chargeTimes = { 4: 3, 8: 4.5 };
 
 export default class Foe {
   at: V2;
@@ -16,7 +17,6 @@ export default class Foe {
   dying?: number;
   radius = 20;
   charge = 0;
-  chargeTime = 2;
   game: Game;
   order: number;
   angle = 0;
@@ -45,7 +45,11 @@ export default class Foe {
     this.game.foes.push(this);
     wing.foes.push(this);
 
-    this.chargeTime = this.game.beatLength * (chargeTimes[this.kind] || 0.5);
+    
+  }
+
+  get chargeTime(){
+    return this.game.beatLength * (chargeTimes[this.kind] || 0.5);
   }
 
   draw() {
@@ -63,10 +67,11 @@ export default class Foe {
       ctx.shadowBlur = 5;
       ctx.lineWidth = 0.1;
 
-      if (![Foe.MIRAGE, Foe.STEALTH].includes(this.kind)) {
+      if (Foe.MIRAGE != this.kind) {
         ctx.beginPath();
         ctx.arc(0, 0, 1, 0, 2 * Math.PI);
-        ctx.stroke();
+        if(Foe.STEALTH != this.kind)
+          ctx.stroke();
         ctx.fill();
       }
 
@@ -103,6 +108,10 @@ export default class Foe {
 
   drawSignature(ctx: CanvasRenderingContext2D) {
     switch (this.kind) {
+      case Foe.SHIELD:
+        ctx.beginPath();
+        ctx.arc(0, 0, 0.5, 0, Math.PI * 2);
+        ctx.stroke();
       case Foe.PAWN:
         ctx.moveTo(0, 1);
         ctx.lineTo(0, 0.5);
@@ -149,12 +158,6 @@ export default class Foe {
         ctx.beginPath();
         ctx.arc(0, 0, 1, 0, 2 * Math.PI);
         ctx.fill();
-        return;
-      case Foe.SHIELD:
-        ctx.lineWidth = 0.05;
-        ctx.beginPath();
-        ctx.arc(0, 0, 0.8, 0, Math.PI * 2);
-        ctx.stroke();
         return;
       case Foe.BOMB:
         for (let i = 0; i <= 16; i++) {
@@ -228,6 +231,12 @@ export default class Foe {
       case Foe.CHASE:
         this.vel = v2.scale(v2.fromAngle(this.angle + Math.PI / 2), 200);
         break;
+      case Foe.SHIELD:
+        if(this.shields < 1)
+          this.shields ++;
+        else
+          new Shot(this.game, this.at, this.angle);
+        break;  
       default:
         new Shot(this.game, this.at, this.angle);
         break;
@@ -262,8 +271,8 @@ export default class Foe {
     return this.dying >= 1;
   }
 
-  shoot() {
-    if (this.charge > 0 || this.kind == 2) return;
+  shoot() {    
+    if (this.charge > 0 || this.kind == Foe.WALL || this.at[0] < 0) return;
 
     if ([1, 6, 10, 11, 12].includes(this.kind))
       this.game.tweens.add(
@@ -285,6 +294,7 @@ export default class Foe {
 
   explode() {
     if (this.dying) return;
+    this.game.score += Math.floor(this.game.shield);
     this.remove();
     new Explosion(this.game, this.at);
   }
@@ -301,6 +311,7 @@ export default class Foe {
     if (this.shields > 0) {
       new CirclePop(this.game, this, this.outerRadius);
       this.shields--;
+      bubbleSfx();
     } else {
       this.explode();
     }

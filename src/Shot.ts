@@ -47,6 +47,9 @@ export default class Shot {
     let head = tail.head;
 
     if (head[1] > this.game.height){
+      if(this.phantom){
+        return false;
+      }
       new Explosion(this.game, head, {color:[255,0,0]});
       this.game.shieldHit()
     }

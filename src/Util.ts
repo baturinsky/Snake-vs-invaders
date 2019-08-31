@@ -27,6 +27,13 @@ export function randomElement<T>(list:T[], rni:() => number){
   return list[rni() % list.length]
 }
 
+export function weightedRandom(a: number[], rni: () => number) {
+  let roll = (rni() % a.reduce((x, y) => x + y)) - a[0];
+  let i = 0;
+  while (roll >= 0) roll -= a[++i];
+  return i;
+}
+
 export function random(seed) {
   seed = seed % 2147483647;
   if (seed <= 0) 
@@ -34,5 +41,12 @@ export function random(seed) {
   return () =>{
     return seed = seed * 16807 % 2147483647;
   };  
+}
+
+export function eachFrame(fun: (time: number) => void) {
+  requestAnimationFrame(time => {
+    fun(time);
+    eachFrame(fun);
+  });
 }
 

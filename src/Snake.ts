@@ -8,6 +8,10 @@ export default class Snake {
   hurt = 0;
   maxLength = 150
 
+  get length(){
+    return this.tail.maxLength
+  }
+
   constructor(public game: Game) {
     this.tail = new Tail({ maxLength: this.maxLength, maxDots: 30 });
   }
@@ -27,13 +31,14 @@ export default class Snake {
     if(foeHit){
       foeHit.damage();
       this.tail.loseHead();
-      this.tail.maxLength *= 0.9;
+      this.tail.maxLength = Math.max(10, this.tail.maxLength - 10);
+
       this.hurt = 1;
       this.game.delayed(0.2, ()=>{this.hurt = 0})
     }
 
     if(this.tail.maxLength <= this.maxLength){
-      this.tail.maxLength += dTime;
+      this.tail.maxLength += dTime * this.game.snakeRecoverRate;
     }
   }
 
