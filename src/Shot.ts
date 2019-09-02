@@ -3,13 +3,14 @@ type V2 = [number, number];
 import Tail from "./Tail";
 import Game from "./Game";
 import { bounce as bounceFx } from "./Sound";
-import { canvasCache, min } from "./Util";
+//import { canvasCache, min } from "./Util";
 import Explosion from "./Explosion";
+import Foe from "./Foe";
 
 const shotLength = 30;
 const shotDots = 6;
 
-let glow = canvasCache([20, 20], ctx => {
+/*let glow = canvasCache([20, 20], ctx => {
   ctx.filter = "blur(2px)";
 
   ctx.fillStyle = `rgba(255, 255, 255, 0.3)`;
@@ -21,15 +22,21 @@ let glow = canvasCache([20, 20], ctx => {
   ctx.beginPath();
   ctx.arc(10, 10, 3, 0, Math.PI * 2);
   ctx.fill();
-});
+});*/
 
 export default class Shot {
   tail: Tail;
   bounces = 0;
   phantom?: boolean;
+  hp:number;
+  color = "255,255,255"
 
-  constructor(public game: Game, at: V2, angle: number, shotVel = 180) {
+  constructor(public game: Game, at: V2, angle: number, color?:string, shotVel = 180) {
+    if(color)
+      this.color = color;
     game.shots.push(this);
+    this.hp = game.lastUnlock >= Game.U_PIERCE?2:1;
+    shotVel = Math.min(700, shotVel * (30 + game.complication) / 40)
     let dir = [-Math.sin(angle), Math.cos(angle)] as V2;
     this.tail = new Tail({
       dots: [v2.sum(at, dir, 10)],
@@ -40,9 +47,6 @@ export default class Shot {
   }
 
   update(dTime: number) {
-    /*if(this.bounces>=13)
-      return false;*/
-
     let tail = this.tail;
     let head = tail.head;
 
@@ -69,7 +73,7 @@ export default class Shot {
     if (this.bounces > 0 && !this.phantom) {
       let foeHit = this.game.foeHit(next);
       if (foeHit) {
-        if (foeHit.kind == 2) {
+        if (foeHit.kind == Foe.WALL) {
           let impactPoint: V2;
           for (impactPoint of v2.along(head, next))
             if (foeHit.hitTest(impactPoint)) break;
@@ -82,7 +86,9 @@ export default class Shot {
         } else {
           foeHit.damage();
         }
-        return false;
+        this.hp -= 1;
+        if(this.hp<=0)
+          return false;
       }
     }
 
@@ -117,16 +123,23 @@ export default class Shot {
     let head = v2.round(this.tail.head);
 
     if(!this.phantom){
-      ctx.drawImage(glow, head[0] - 10, head[1] - 10);
-      if (this.bounces > 0) ctx.drawImage(glow, head[0] - 10, head[1] - 10);
+      //ctx.drawImage(glow, head[0] - 10, head[1] - 10);
+      ctx.fillStyle = `rgba(${this.color}, 0.3)`;
+      for(let i=0;i<(this.bounces?2:1);i++){
+        ctx.beginPath();
+        ctx.arc(head[0], head[1], 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    
+      //if (this.bounces > 0) ctx.drawImage(glow, head[0] - 10, head[1] - 10);
     }
 
     ctx.lineWidth = 4;
-    ctx.strokeStyle = "#ffdddd";
+    ctx.strokeStyle = `rgb(${this.color})`;
 
     this.tail.draw(ctx, (t, i) => {
       let brightnes = Math.min(i / this.tail.dots.length);
-      ctx.strokeStyle = `rgb(255, 255, 255, ${brightnes})`;
+      ctx.strokeStyle = `rgb(${this.color}, ${brightnes})`;
       //ctx.shadowColor = `rgba(${brightnes*2},${brightnes},${brightnes})`;
     });
 

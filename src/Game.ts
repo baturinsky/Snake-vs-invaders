@@ -3,13 +3,12 @@ type V2 = [number, number];
 import Foe from "./Foe";
 import Shot from "./Shot";
 import Snake from "./Snake";
-import Explosion from "./Explosion";
 import Schedule, { Action } from "./Schedule";
 import Tweens from "./Tweens";
 import Wing from "./Wing";
-import { volley as volleySfx } from "./Sound";
 import { min, random } from "./Util";
 import FX from "./FX";
+import { talk } from "./lang";
 
 export default class Game {
   snake: Snake;
@@ -34,7 +33,7 @@ export default class Game {
   beat = 0;
   shieldRecharge = [0.2, 1];
   snakeRecoverRate = 0.5;
-  maxShield = 100;
+  maxShield = 50;
   shield: number;
   shieldAnim = 1;
   score = 0;
@@ -42,15 +41,64 @@ export default class Game {
   snakeMinLength = 20;
   heat = 0;
   complication = 0;
-  stage = 8;
+  artIn = 10000;
+
+  static readonly stageNames = [
+    "",
+    "In Media Res",
+    "Rainy",
+    "Wall",
+    "Mirage",
+    "Shield",
+    "More",
+    "Chaos",
+    "Fireworks",
+    "Curtain"
+  ];
+
+  static readonly bonusNames = [
+    "+50 shields",
+    "+50% snake length",
+    "+50% shield recharge",
+    "piercing shots",
+    "+100% snake regen",
+    "artillery",
+    "chain reaction",
+    "+100% artillery",
+    "!escape ship!",
+    "longer stages",
+    "more enemies"
+  ];
+
+  static readonly U_SHIELD = 0;
+  static readonly U_LENGTH = 1;
+  static readonly U_CHARGE = 2;
+  static readonly U_PIERCE = 3;
+  static readonly U_SREGEN = 4;
+  static readonly U_ARTILL = 5;
+  static readonly U_CHAINR = 6;
+  static readonly U_MORART = 7;
+  static readonly U_ROCKET = 8;
+  static readonly U_LNGSTG = 9;
+  static readonly U_ENEMIS = 10;
 
   rni: () => number;
 
   constructor(
     public canvas: HTMLCanvasElement,
-    public background: HTMLCanvasElement
+    public background: HTMLCanvasElement,
+    public stage: number,
+    public updateUI: Function,
+    public lastUnlock: number
   ) {
+    if (lastUnlock >= Game.U_SHIELD) this.maxShield += 50;
+
+    if (lastUnlock >= Game.U_ARTILL) this.artIn = 40;
+
+    if (lastUnlock >= Game.U_MORART) this.artIn = 20;
+
     this.init();
+    console.log(Foe.colors);
   }
 
   sendPhalanx(wingInd: number) {
@@ -58,9 +106,8 @@ export default class Game {
   }
 
   sendSkirmisher(wingInd: number) {
-    let skirmishers = Math.ceil(this.rnf() * this.complication / 10)
-    for(let i=0;i<skirmishers;i++)
-      new Wing(this, wingInd, true);
+    let skirmishers = Math.ceil((this.rnf() * this.complication) / 10);
+    for (let i = 0; i < skirmishers; i++) new Wing(this, wingInd, true);
   }
 
   rnf() {
@@ -73,6 +120,11 @@ export default class Game {
 
   init() {
     this.seed(15);
+
+    for (let stageText of talk.split("\n\n")) {
+      console.log(stageText);
+    }
+
     this.shield = this.maxShield;
 
     this.width = this.canvas.clientWidth / this.scale;
@@ -92,20 +144,23 @@ export default class Game {
     this.shots = [];
     this.foes = [];
     this.fx = [];
+
+    this.updateUI(this);
   }
 
-  update(timeStamp: number) {    
-    if(this.over){
+  update(timeStamp: number) {
+    if (this.over) {
       return;
     }
-    
+
     if (!this.mouseAt) return;
 
     this.complication =
-      (this.time / 60 + this.stage - 3) *
-      (0.5 + (0.5 * this.shield) / this.maxShield);
+      1.5 *
+      (this.time / 60 + this.stage) *
+      (0.4 + (0.6 * this.shield) / this.maxShield);
 
-    this.beatLength = 4 * 20 / (20 + this.complication);
+    this.beatLength = (4 * 20) / (20 + this.complication);
 
     let snakeMove = v2.dist(this.mouseAt, this.snake.head);
     let snakeMoves = snakeMove >= 5;
@@ -119,6 +174,7 @@ export default class Game {
       this.maxShield,
       this.shield +
         dTime *
+          (this.lastUnlock >= Game.U_CHARGE ? 0.666 : 1) *
           (this.shieldRecharge[0] +
             (this.shieldRecharge[1] - this.shieldRecharge[0]) *
               (1 - this.shield / this.maxShield))
@@ -138,20 +194,22 @@ export default class Game {
 
     this.time += dTime;
     this.beatTime += dTime;
-    
-    if(this.beatTime > this.beatLength){
+
+    if (this.beatTime > this.beatLength) {
       beatChanged = true;
       this.beatTime -= this.beatLength;
     }
 
     this.seed(this.beat);
 
-    if (beatChanged && this.beat % 9 == 0) this.sendPhalanx(this.beat / 9);
+    if (this.time <= this.timeLimit) {
+      if (beatChanged && this.beat % 9 == 0) this.sendPhalanx(this.beat / 9);
 
-    if (beatChanged && this.beat % 5 == 2)
-      this.sendSkirmisher(Math.floor(this.beat / 5));
-
-    //if (beatChanged) this.sendSmallwing(-1 - this.beat);
+      if (beatChanged && this.beat % 5 == 2)
+        this.sendSkirmisher(Math.floor(this.beat / 5));
+    } else {
+      this.wings.forEach(w => w.retreat());
+    }
 
     this.snake.update(snakeMoves ? this.mouseAt : null, dTime);
 
@@ -169,21 +227,40 @@ export default class Game {
     this.foes = this.foes.filter(foe => !foe.dead);
     this.fx = this.fx.filter(sfx => sfx.update(dTime));
 
-    if (this.shield < 0 || this.snake.length < this.snakeMinLength)
+    if (
+      (this.shield < 0 ||
+        this.snake.length < this.snakeMinLength ||
+        (this.time >= this.timeLimit &&
+          this.wings.length == 0 &&
+          this.shots.length == 0)) &&
+      !this.over
+    ) {
       this.over = true;
+      this.updateUI(this);
+    }
+
+    let art = this.artIn - (this.time % this.artIn);
+    if (art <= 1 && art + dTime > 1) {
+      for (let i = 0; i < 20; i++) {
+        let shot = new Shot(
+          this,
+          [((this.width - 200) / 20) * i + 100, this.height - 1],
+          Math.PI,
+          null,
+          300
+        );
+        shot.bounces = 1;
+      }
+    }
 
     this.draw();
 
-    if (beatChanged) {
-      this.beat++;
-      if (beatChanged) {
-        this.delayed(2, () => volleySfx());
-      }
-    }
+    if (beatChanged) this.beat++;
   }
 
   toggleTime() {
     this.realtime = !this.realtime;
+    console.log(this);
   }
 
   draw() {
@@ -214,7 +291,7 @@ export default class Game {
 
     gradient.addColorStop(
       0,
-      `rgba(255, 255, 255, ${0.002 * this.shield * this.shieldAnim})`
+      `rgba(255, 255, 255, ${0.005 * this.shield * this.shieldAnim})`
     );
     gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
     this.ctx.fillStyle = gradient;
@@ -232,13 +309,29 @@ export default class Game {
     this.ctx.textAlign = "right";
     this.ctx.fillText("SCORE " + this.score, this.width - 20, this.height - 20);
     this.ctx.fillText(
-      "TIME " + this.time.toFixed(0),
+      "TIME " + (this.timeLimit - this.time).toFixed(0),
       this.width - 150,
       this.height - 20
     );
-    this.ctx.fillText("STAGE " + this.stage, this.width - 240, this.height - 20);
+    this.ctx.fillText(
+      "STAGE " + this.stage,
+      this.width - 240,
+      this.height - 20
+    );
 
-    this.ctx.restore();    
+    let art = this.artIn - (this.time % this.artIn);
+    if (art > 1 && art < 3) {
+      this.ctx.fillStyle = `rgba(255, 0, 0, ${Math.sin(art * 10) * 0.5 + 0.5})`;
+      this.ctx.font = `24pt "Courier"`;
+      this.ctx.textAlign = "center";
+      this.ctx.fillText(
+        [...new Array(28)].map(() => "!").join(" "),
+        this.width / 2,
+        this.height - 70
+      );
+    }
+
+    this.ctx.restore();
 
     for (let fx of this.fx) fx.draw();
 
@@ -247,33 +340,7 @@ export default class Game {
     for (let shot of this.shots) shot.draw();
 
     this.snake.draw();
-    
-    this.drawOverText();
   }
-
-  drawOverText(){
-    if(!this.over)
-      return;
-    this.ctx.save();
-    this.ctx.fillStyle = "white";
-    this.ctx.textAlign = "center";
-    this.ctx.font = `24pt "Courier"`;
-    let reason = null;
-    if (this.snake.length < this.snakeMinLength) reason = "Snake is dead";
-    else if (this.shield < 0) reason = "Planetary shields depleted";
-    
-    let title = reason?"GAME OVER":"FLIGHT OF THE SNAKE";
-    
-    this.ctx.fillText(title, this.width / 2, this.height / 2);
-
-    this.ctx.font = `12pt "Courier"`;
-    if(reason)
-      this.ctx.fillText(reason, this.width / 2, this.height / 2 + 20);
-    
-    this.ctx.fillText(`Press S to ${reason?"re":""}start`, this.width / 2, this.height / 2 + 60);
-    this.ctx.restore();
-  }
-
 
   foeHit(at: V2): Foe {
     let list = this.foes.filter(
@@ -295,7 +362,25 @@ export default class Game {
     this.shieldAnim = 0;
   }
 
-  complicatedPhalanx(){
-    return this.complication >= this.rni()%20;
+  complicatedPhalanx() {
+    return this.complication >= this.rni() % 20;
+  }
+
+  get timeLimit() {
+    return 40 + this.stage * 20;
   }
 }
+
+/*
+  static readonly timeLimits = [
+    90,
+    90,
+    120,
+    150,
+    180,
+    210,
+    240,
+    270,
+    300
+  ]
+*/

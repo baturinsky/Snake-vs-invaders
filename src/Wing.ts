@@ -96,6 +96,10 @@ function forwardAndBack(foe: Foe) {
   }
 }
 
+function allRetreat(foe:Foe){
+  foe.vel = [0, -100];
+}
+
 function stopAtBorder(foe: Foe) {
   if (
     (foe.at[0] < 100 && foe.vel[0] < 0) ||
@@ -123,9 +127,11 @@ export default class Wing {
   static readonly WALL = 5;
   static readonly SHIELD = 6;
   static readonly CONTINUOUS = 7;
-  static readonly RANDOM = 8;
+  static readonly RIGGED = 8;
+  static readonly RANDOM = 9;
 
   static readonly phalanxUnlocks = [
+    0,
     0,
     Wing.H2X,
     Wing.WALL,
@@ -133,9 +139,12 @@ export default class Wing {
     Wing.SHIELD,
     Wing.W2X,
     Wing.RANDOM,
+    Wing.RIGGED,
     Wing.CONTINUOUS
   ];
+
   static readonly skirmishUnlocks = [
+    0,
     Foe.SNIPE,
     Foe.FAN,
     Foe.WALL,
@@ -143,8 +152,10 @@ export default class Wing {
     Foe.SHIELD,
     Foe.SPAWN,
     Foe.CHASE,
+    Foe.BOMB,
     Foe.COMM
   ];
+
 
   get size() {
     return this.conf.cols * this.conf.rows;
@@ -159,8 +170,8 @@ export default class Wing {
       this.conf = {
         cols: 1,
         rows: 1,
-        kind: randomElement(
-          Wing.skirmishUnlocks.slice(0, game.stage),
+        kind: game.time<20?Wing.skirmishUnlocks[game.stage]:randomElement(
+          Wing.skirmishUnlocks.slice(1, game.stage + 1),
           game.rni
         ),
         init: centered,
@@ -177,13 +188,19 @@ export default class Wing {
         foeBeat: formationFire,
         foeThink: forwardAndBack
       };
-      if (game.complicatedPhalanx()) {
-        this.conf.complication = randomElement(
-          Wing.phalanxUnlocks.slice(0, game.stage),
+      if (game.time<20 || game.complicatedPhalanx()) {
+        this.conf.complication = game.time<20?Wing.phalanxUnlocks[game.stage]:randomElement(
+          Wing.phalanxUnlocks.slice(1, game.stage + 1),
           game.rni
         );
         
         switch (this.conf.complication) {
+          case Wing.MIRAGE:
+            this.conf.kind = Foe.MIRAGE;
+            break;
+          case Wing.RIGGED:
+            this.conf.kind = Foe.RIGGED;
+            break;
           case Wing.H2X:
             this.conf.rows *= 2;
             break;
@@ -215,7 +232,6 @@ export default class Wing {
     for (let i = 0; i < n; i++) {
       new Foe(this, f(this, i));
     }
-    console.log(this);
   }
 
   onBeat() {
@@ -227,5 +243,10 @@ export default class Wing {
     this.foes.forEach(foe => this.conf.foeThink(foe));
     this.foes.forEach(foe => foe.update(dTime));
     this.foes = this.foes.filter(foe => !foe.dead);
+  }
+
+  retreat(){
+    this.conf.foeThink = allRetreat;
+    this.conf.foeBeat = doNothing;
   }
 }

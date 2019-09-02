@@ -1,19 +1,103 @@
-<!DOCTYPE html>
-<html class="has-navbar-fixed-top">
+<html>
   <head>
-    <meta charset="utf8" />
-    <link rel="stylesheet" href="global.css" />
-    <link rel="stylesheet" href="bundle.css" />
     <link rel="icon" type="image/png" href="snake.png" />
     <script src="bundle.js"></script>
-    <title>Snake vs Invaders</title>
+    <title>Flight of the Snake</title>
+    <style>
+      .centered {
+        width: 1200px;
+        height: 800px;
+        display: flex;
+        flex-flow: column;
+        justify-content: space-evenly;
+      }
+
+      td,
+      button,
+      span,
+      body {
+        font-size: 18px;
+        padding: 0px;
+        color: white;
+        font-family: "Courier New";
+        text-align: center;
+      }
+
+      td{
+        width:100px;
+      }
+
+      .cnt {
+        width: 100%;
+        position: absolute;
+      }
+
+      .row, .cnt{
+        display: flex;
+        flex-flow: row;
+        justify-content: center;
+      }
+
+      .blk {
+        background: black;
+        box-shadow: 3px 3px 10px 0px rgba(0,0,0,0.7);
+        border: solid 0.5px gray;
+      }
+
+      h1 {
+        font-weight: 500;
+        margin: 5px;
+      }
+
+      .nop{
+        pointer-events: none;
+      }
+
+      button{
+        pointer-events: all;
+        background: black;
+        border: solid 1px gray;
+        height:50px;
+        cursor:pointer;
+        width:200px;
+      }
+
+      button:hover{
+        background: #333;
+      }
+
+      button:disabled{
+        background: none;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      span{
+        display: inline-block;
+        width: 200px;
+      }
+
+      .wide{
+        width: 300px;
+      }
+
+      .ui{
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+    </style>
   </head>
   <body>
-    <div class="canvas-container">
-      <canvas class="black" id="canvas-background"></canvas>
+    <div class="cnt">
+      <canvas class="centered blk" id="bg"></canvas>
     </div>
-    <div class="canvas-container">
-      <canvas id="canvas-main"></canvas>
+    <div class="cnt">
+      <canvas class="centered" id="main"></canvas>
+    </div>
+    <div class="cnt nop">
+      <div class="centered ui" >
+        <div id="ui"/>
+      </div>
     </div>
   </body>
 </html>

@@ -6,13 +6,17 @@ type V2 = [number, number];
 export default class Snake {
   tail: Tail;
   hurt = 0;
-  maxLength = 150
+  maxLength = 100
 
   get length(){
     return this.tail.maxLength
   }
 
   constructor(public game: Game) {
+    if(game.lastUnlock>=Game.U_LENGTH){
+      this.maxLength += 50;
+    }
+
     this.tail = new Tail({ maxLength: this.maxLength, maxDots: 30 });
   }
 
@@ -38,7 +42,7 @@ export default class Snake {
     }
 
     if(this.tail.maxLength <= this.maxLength){
-      this.tail.maxLength += dTime * this.game.snakeRecoverRate;
+      this.tail.maxLength += dTime * this.game.snakeRecoverRate * (this.game.lastUnlock>=Game.U_SREGEN?2:1);
     }
   }
 

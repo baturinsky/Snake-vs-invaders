@@ -5,7 +5,7 @@ import Explosion from "./Explosion";
 import Shot from "./Shot";
 import Wing from "./Wing";
 import CirclePop from "./CirclePop";
-import {bubble as bubbleSfx} from "./Sound"
+//import {bubble as bubbleSfx} from "./Sound"
 
 let dyingDuration = 0.5;
 
@@ -23,6 +23,7 @@ export default class Foe {
   kind = 1;
   special = 0;
   shields = 0;
+  colorString: string;
 
   static readonly PAWN = 1;
   static readonly WALL = 2;
@@ -36,19 +37,24 @@ export default class Foe {
   static readonly SNIPE = 10;
   static readonly STEALTH = 11;
   static readonly SNAKE = 12;
+  static readonly RIGGED = 13;
+
+  static readonly colors = "fff fff aaa 0f0 00f ff0 ffe 08f f00 f08 f0f 008 fff faa"
+    .split(" ")
+    .map(s => s.split("").map(n => parseInt(n, 16) * 17));
 
   constructor(public wing: Wing, o) {
     Object.assign(this, o);
+
+    this.colorString = `${Foe.colors[this.kind].join(",")}`;
 
     this.game = wing.game;
     this.order = wing.foes.length;
     this.game.foes.push(this);
     wing.foes.push(this);
-
-    
   }
 
-  get chargeTime(){
+  get chargeTime() {
     return this.game.beatLength * (chargeTimes[this.kind] || 0.5);
   }
 
@@ -56,22 +62,24 @@ export default class Foe {
     let ctx = this.game.ctx;
     ctx.save();
 
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = `rgba(${this.colorString})`;
     ctx.translate(this.at[0], this.at[1]);
     ctx.scale(this.radius, this.radius);
     ctx.rotate(this.angle);
 
     if (!this.dying) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.max(this.charge / 2, 0)})`;
-      ctx.shadowColor = `white`;
+      ctx.fillStyle = `rgba(${this.colorString},${Math.max(
+        this.charge / 2,
+        0
+      )})`;
+      ctx.shadowColor = `rgba(${this.colorString})`;
       ctx.shadowBlur = 5;
       ctx.lineWidth = 0.1;
 
       if (Foe.MIRAGE != this.kind) {
         ctx.beginPath();
         ctx.arc(0, 0, 1, 0, 2 * Math.PI);
-        if(Foe.STEALTH != this.kind)
-          ctx.stroke();
+        if (Foe.STEALTH != this.kind) ctx.stroke();
         ctx.fill();
       }
 
@@ -95,7 +103,7 @@ export default class Foe {
       ctx.setLineDash([5, 15]);
       for (let f of this.game.foes) {
         if (f.kind == Foe.COMM) continue;
-        ctx.strokeStyle = "white";
+        ctx.strokeStyle = `rgba(${this.colorString})`;
         ctx.lineWidth = 10 * (this.charge - 0.9);
         ctx.beginPath();
         ctx.moveTo(...this.at);
@@ -115,6 +123,13 @@ export default class Foe {
       case Foe.PAWN:
         ctx.moveTo(0, 1);
         ctx.lineTo(0, 0.5);
+        return;
+      case Foe.RIGGED:
+        for (let i = 0; i < 3; i++) {
+          ctx.moveTo(0, 1);
+          ctx.lineTo(0, 0.5);
+          ctx.rotate(Math.PI * 2 / 3);
+        }
         return;
       case Foe.WALL:
         ctx.lineWidth = 0.2;
@@ -149,7 +164,7 @@ export default class Foe {
         return;
       case Foe.MIRAGE:
         if (this.phantom && Math.random() < 0.005) {
-          ctx.strokeStyle = "rgba(255,255,255,0.5)";
+          ctx.strokeStyle = `rgba(${this.colorString},0.5)`;
         }
         ctx.moveTo(0, 1);
         ctx.lineTo(0, 0.5);
@@ -183,10 +198,12 @@ export default class Foe {
   }
 
   actuallyShoot() {
+    if(this.dying)
+      return;
     switch (this.kind) {
       case Foe.SPAWN:
         if (this.special) {
-          new Shot(this.game, this.at, this.angle);
+          new Shot(this.game, this.at, this.angle, this.colorString);
         } else {
           this.vel[0] = this.vel[0] * (this.game.rni() % 2 ? 1 : -1);
           new Foe(this.wing, {
@@ -205,16 +222,22 @@ export default class Foe {
       case Foe.FAN:
         for (let i = -2; i <= 2; i++) {
           let a = i * 0.3;
-          new Shot(this.game, this.at, a);
+          new Shot(this.game, this.at, a, this.colorString);
         }
         break;
       case Foe.MIRAGE:
-        let shot = new Shot(this.game, this.at, this.angle);
+        let shot = new Shot(this.game, this.at, this.angle, this.colorString);
         if (this.phantom) shot.phantom = true;
         break;
       case Foe.BOMB:
         for (let i = 0; i < 16; i++) {
-          new Shot(this.game, this.at, (Math.PI / 8) * i, 500);
+          new Shot(
+            this.game,
+            this.at,
+            (Math.PI / 8) * i,
+            this.colorString,
+            500
+          );
           this.explode();
         }
         break;
@@ -224,6 +247,7 @@ export default class Foe {
             this.game,
             v2.sum(this.at, v2.fromAngle(this.angle), i * 5),
             this.angle,
+            this.colorString,
             500
           );
         }
@@ -232,13 +256,11 @@ export default class Foe {
         this.vel = v2.scale(v2.fromAngle(this.angle + Math.PI / 2), 200);
         break;
       case Foe.SHIELD:
-        if(this.shields < 1)
-          this.shields ++;
-        else
-          new Shot(this.game, this.at, this.angle);
-        break;  
+        if (this.shields < 1) this.shields++;
+        else new Shot(this.game, this.at, this.angle, this.colorString);
+        break;
       default:
-        new Shot(this.game, this.at, this.angle);
+        new Shot(this.game, this.at, this.angle, this.colorString);
         break;
     }
     this.charge = 0;
@@ -264,21 +286,25 @@ export default class Foe {
     let next = v2.sum(this.at, this.vel, dTime);
     this.at = next;
 
-    if (this.at[1] < -400) this.remove();
+    if (this.at[1] < -20 && this.vel[1] < 0) this.remove();
   }
 
   get dead() {
     return this.dying >= 1;
   }
 
-  shoot() {    
+  shoot() {
     if (this.charge > 0 || this.kind == Foe.WALL || this.at[0] < 0) return;
 
-    if ([1, 6, 10, 11, 12].includes(this.kind))
+    if (
+      [Foe.PAWN, Foe.MIRAGE, Foe.SNIPE, Foe.STEALTH, Foe.SNAKE, Foe.RIGGED].includes(
+        this.kind
+      )
+    )
       this.game.tweens.add(
         this,
         "angle",
-        0.5 * (this.game.rnf() - 0.5),
+        0.3 * (this.game.rnf() - 0.5),
         this.chargeTime - 0.1
       );
 
@@ -286,6 +312,7 @@ export default class Foe {
   }
 
   remove() {
+    if (this.dying) return;
     this.dying = 0.01;
     if (this.kind == Foe.MIRAGE && !this.phantom) {
       for (let f of this.wing.foes) if (f.phantom) f.remove();
@@ -293,10 +320,19 @@ export default class Foe {
   }
 
   explode() {
-    if (this.dying) return;
-    this.game.score += Math.floor(this.game.shield);
+    if (this.dying) return;      
+
     this.remove();
-    new Explosion(this.game, this.at);
+    this.game.score += Math.floor(
+      (this.game.shield / this.game.maxShield) * 100
+    );
+    for (let foe of this.game.foes) {
+      if (this.game.lastUnlock >= Game.U_CHAINR && this.game.rni() % 4 == 0)
+        if (foe != this && v2.dist(this.at, foe.at) < 50) {
+          foe.damage();
+        }
+    }
+    new Explosion(this.game, this.at, { color: Foe.colors[this.kind] });
   }
 
   hitTest(a: V2): V2 {
@@ -308,10 +344,16 @@ export default class Foe {
   }
 
   damage() {
+    if (this.kind == Foe.RIGGED){
+      let angle = this.game.rnf() * Math.PI * 2;
+      console.log(angle);
+      this.game.delayed(0.01, () => {new Shot(this.game, this.at, angle, this.colorString)});
+    }
+
     if (this.shields > 0) {
       new CirclePop(this.game, this, this.outerRadius);
       this.shields--;
-      bubbleSfx();
+      //bubbleSfx();
     } else {
       this.explode();
     }

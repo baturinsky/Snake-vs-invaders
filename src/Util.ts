@@ -1,24 +1,25 @@
 export function min<T>(list: T[], fn: (T) => number) {
-  let res = list.reduce(
-    (prev, item, i) => {
-      let d = fn(item);
-      if (d < prev[1]) return [i, d];
-      else return prev;
-    },
-    [-1, Number.MAX_VALUE] as [number, number]
-  );
-  if (res[0] < 0) return { ind: -1, item: null, val: null };
-  return { ind: res[0], item: list[res[0]], val: fn(list[res[0]]) };
+  let minV = Number.MAX_VALUE
+  let minI = -1
+  for(let i =0; i<list.length;i++){
+    let v = fn(list[i])
+    if(minV > v){
+      minV = v;
+      minI = i;
+    }
+  }
+  if (minI >= 0)
+    return { ind: minI, item: list[minI], val: minV };
 }
 
 export function canvasCache(
   size: [number, number],
   draw: (ctx: CanvasRenderingContext2D) => void
 ) {
-  let canvas = document.createElement("canvas");
+  const canvas = document.createElement("canvas");
   canvas.width = size[0];
   canvas.height = size[1];
-  let ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d");
   draw(ctx);
   return canvas;
 }
