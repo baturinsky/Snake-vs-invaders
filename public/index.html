@@ -1,8 +1,6 @@
 <html>
   <head>
-    <link rel="icon" type="image/png" href="snake.png" />
     <script src="bundle.js"></script>
-    <title>Flight of the Snake</title>
     <style>
       .centered {
         width: 1200px;
@@ -56,10 +54,11 @@
       button{
         pointer-events: all;
         background: black;
-        border: solid 1px gray;
-        height:50px;
+        border: solid 1px #888;
+        height:40px;
         cursor:pointer;
         width:200px;
+        margin:3px;
       }
 
       button:hover{
@@ -70,6 +69,7 @@
         background: none;
         cursor: not-allowed;
         opacity: 0.5;
+        border: solid 1px #333;
       }
 
       span{

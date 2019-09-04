@@ -44,6 +44,7 @@ export default class Snake {
     if(this.tail.maxLength <= this.maxLength){
       this.tail.maxLength += dTime * this.game.snakeRecoverRate * (this.game.lastUnlock>=Game.U_SREGEN?2:1);
     }
+    
   }
 
   draw() {

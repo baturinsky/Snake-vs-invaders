@@ -19,8 +19,8 @@ export default class CirclePop extends FX {
     let ctx = this.game.ctx;
     ctx.save();
     ctx.beginPath();
-    ctx.lineWidth = 2 * (1 - this.time);
-    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = `rgba(256,256,256,${1 - this.time})`;
     ctx.arc(
       this.foe.at[0],
       this.foe.at[1],

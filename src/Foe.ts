@@ -267,6 +267,10 @@ export default class Foe {
   }
 
   update(dTime: number) {
+    if(this.game.ship && v2.dist(this.at, this.game.ship)<120){
+      this.explode();
+    }
+
     if (this.kind == Foe.CHASE) {
       let delta = v2.delta(this.at, this.game.snake.head);
       this.angle = Math.atan2(delta[1], delta[0]) - Math.PI / 2;
@@ -286,7 +290,7 @@ export default class Foe {
     let next = v2.sum(this.at, this.vel, dTime);
     this.at = next;
 
-    if (this.at[1] < -20 && this.vel[1] < 0) this.remove();
+    if (this.at[1] < -20 && this.vel[1] < 0 || this.at[1]>=this.game.height) this.remove();
   }
 
   get dead() {
@@ -347,7 +351,7 @@ export default class Foe {
     if (this.kind == Foe.RIGGED){
       let angle = this.game.rnf() * Math.PI * 2;
       console.log(angle);
-      this.game.delayed(0.01, () => {new Shot(this.game, this.at, angle, this.colorString)});
+      this.game.delayed(0.01, () => {new Shot(this.game, this.at, Math.PI, this.colorString)});
     }
 
     if (this.shields > 0) {

@@ -20,6 +20,12 @@ export default class Tail {
 
   }
 
+  translate(delta:V2){
+    for(let i in this.dots){
+      this.dots[i] = v2.sum(this.dots[i],delta)
+    }
+  }
+
   enlarge(next: V2) {
     let dots = this.dots;
     dots.push(next);

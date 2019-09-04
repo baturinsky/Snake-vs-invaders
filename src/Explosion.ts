@@ -15,9 +15,9 @@ export default class Explosion extends FX {
   color: number[] = [255, 255, 255];
   arc = Math.PI * 2;
   direction: number;
-  lifeTime = 1;
+  lifeTime = 1.5;
   pnum = 30;
-  pvel = 200;
+  pvel = 300;
 
   constructor(game: Game, public at: V2, options?: any) {
     super(game);

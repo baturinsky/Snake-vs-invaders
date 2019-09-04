@@ -8,7 +8,60 @@ import Tweens from "./Tweens";
 import Wing from "./Wing";
 import { min, random } from "./Util";
 import FX from "./FX";
-import { talk } from "./lang";
+import { talkAll } from "./lang";
+
+function parseTalk(stage) {
+  let lines = talkAll.split("\n\n")[stage].split("\n");
+  let side = lines[0].search("sir") >= 0 ? 2 : 1;
+  let talk: [number, string][] = [];
+  for (let line of lines) {
+    if (line.charAt(0) == "*") {
+      talk.push([0, line.substr(1)]);
+    } else {
+      talk.push([side, line]);
+      side = 3 - side;
+    }
+  }
+  return talk;
+}
+
+class MovingText {
+  time = 0;
+  constructor(
+    public game: Game,
+    public text: string,
+    public color,
+    public lifeTime: number,
+    public at: V2,
+    public vel: V2 = [0, 0]
+  ) {}
+
+  update(dTime: number) {
+    this.time += dTime;
+    this.at = v2.sum(this.at, this.vel, dTime);
+    return this.time < this.lifeTime;
+  }
+
+  draw() {
+    let ctx = this.game.ctx;
+    ctx.save();
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = `black`;
+    ctx.shadowBlur = 3;
+    ctx.font = `12pt "Courier"`;
+    ctx.textAlign = "center";
+    let y = 0;
+    for (let line of this.text.split("|")) {
+      ctx.fillText(
+        line.trim().substr(0, Math.floor(this.time * 100)),
+        this.at[0],
+        this.at[1] + y
+      );
+      y += 20;
+    }
+    ctx.restore();
+  }
+}
 
 export default class Game {
   snake: Snake;
@@ -31,7 +84,7 @@ export default class Game {
   tweens = new Tweens(0);
   beatLength = 3;
   beat = 0;
-  shieldRecharge = [0.2, 1];
+  shieldRecharge = [0.3, 1];
   snakeRecoverRate = 0.5;
   maxShield = 50;
   shield: number;
@@ -42,6 +95,11 @@ export default class Game {
   heat = 0;
   complication = 0;
   artIn = 10000;
+  talk: [number, string][];
+  currentLine = -1;
+  text: MovingText;
+  flight = 0;
+  ship: V2;
 
   static readonly stageNames = [
     "",
@@ -53,7 +111,8 @@ export default class Game {
     "More",
     "Chaos",
     "Fireworks",
-    "Curtain"
+    "Curtain",
+    "Taking Flight"
   ];
 
   static readonly bonusNames = [
@@ -97,6 +156,11 @@ export default class Game {
 
     if (lastUnlock >= Game.U_MORART) this.artIn = 20;
 
+    if (this.stage == 10) this.flight = 0.01;
+
+    this.talk = parseTalk(this.stage - 1);
+    console.log(this.talk);
+
     this.init();
     console.log(Foe.colors);
   }
@@ -118,12 +182,33 @@ export default class Game {
     this.rni = random(n);
   }
 
+  nextLine() {
+    this.currentLine++;
+    let line = this.talk[this.currentLine];
+    if (line) {
+      let at;
+      if (line[0] == 1)
+        at = [
+          Math.min(this.width - 200, Math.max(200, this.snake.head[0])),
+          Math.min(this.height - 200, this.snake.head[1] + 100)
+        ];
+      else at = [this.width / 2, this.height - 100];
+
+      this.text = new MovingText(
+        this,
+        line[1],
+        [`#88ff88`, `#cccccc`, `#8888ff`][line[0]],
+        2 + line[1].length / 12,
+        at,
+        [[0, 0], [0, 10], [0, -10]][line[0]] as V2
+      );
+    } else {
+      this.text = null;
+    }
+  }
+
   init() {
     this.seed(15);
-
-    for (let stageText of talk.split("\n\n")) {
-      console.log(stageText);
-    }
 
     this.shield = this.maxShield;
 
@@ -146,6 +231,8 @@ export default class Game {
     this.fx = [];
 
     this.updateUI(this);
+
+    this.delayed(2, () => this.nextLine());
   }
 
   update(timeStamp: number) {
@@ -202,10 +289,12 @@ export default class Game {
 
     this.seed(this.beat);
 
-    if (this.time <= this.timeLimit) {
-      if (beatChanged && this.beat % 9 == 0) this.sendPhalanx(this.beat / 9);
+    let wingBeats = this.lastUnlock>=Game.U_ENEMIS?[7,3]:[9,5]
 
-      if (beatChanged && this.beat % 5 == 2)
+    if (this.time <= this.timeLimit) {
+      if (beatChanged && this.beat % wingBeats[0] == 0) this.sendPhalanx(this.beat / 9);
+
+      if (beatChanged && this.beat % wingBeats[1] == 2)
         this.sendSkirmisher(Math.floor(this.beat / 5));
     } else {
       this.wings.forEach(w => w.retreat());
@@ -253,6 +342,22 @@ export default class Game {
       }
     }
 
+    if (this.text) {
+      if (!this.text.update(dTime)) this.nextLine();
+    }
+
+    if (this.flight > 0) {
+      this.flight = Math.min(100, this.flight + dTime * 5);
+      this.ship = [
+        this.width / 2 + Math.sin(this.time*1.2),
+        this.height * (1 - (0.5 * this.flight) / 100) + Math.sin(this.time*2.3) * 2,
+      ];
+      let delta: V2 = [0, this.flight * dTime];
+      this.snake.tail.translate(delta);
+      this.foes.forEach(foe => (foe.at = v2.sum(foe.at, delta)));
+      this.shots.forEach(shot => shot.tail.translate(delta));
+    }
+
     this.draw();
 
     if (beatChanged) this.beat++;
@@ -264,9 +369,10 @@ export default class Game {
   }
 
   draw() {
+    let ctx = this.ctx;
     this.canvas.style.cursor = this.over ? "default" : "none";
 
-    this.ctx.clearRect(0, 0, this.width, this.height);
+    ctx.clearRect(0, 0, this.width, this.height);
 
     /*let filteredBg = canvasCache(
       [this.background.width, this.background.height],
@@ -275,14 +381,32 @@ export default class Game {
         ctx.drawImage(this.background, 0, 0);
       }
     );*/
-    this.ctb.clearRect(0, 0, this.width, this.height);
+    
     //this.ctb.drawImage(filteredBg, 0, 1);listener
 
-    this.ctx.shadowColor = "white";
+    if(this.flight){
+      this.ctb.fillStyle = `rgba(0,0,${48 * this.flight/100})`;
+      this.ctb.fillRect(0, 0, this.width, this.height);
+      this.seed(20);
+      this.ctb.fillStyle = `rgba(${this.rni()%255},${this.rni()%255},${this.rni()%255},${this.flight/100})`;
+      for (let i = 0; i < 300; i++) {
+        let x = this.rni() % this.width;
+        let y = (this.rnf() * this.time * 10 + this.rni()) % this.height;
+        this.ctb.fillRect(x,y,1,1);
+      }
+    } else {
+      //this.ctb.clearRect(0, 0, this.width, this.height);
+      this.ctb.fillStyle=`rgba(0,0,0,0.2)`;
+      this.ctb.fillRect(0, 0, this.width, this.height);
+    }
 
-    this.ctx.save();
+    ctx.shadowColor = `white`;
 
-    let gradient = this.ctx.createLinearGradient(
+    ctx.save();
+
+    ctx.translate(0, this.flight * 5);
+
+    let gradient = ctx.createLinearGradient(
       0,
       this.height,
       0,
@@ -294,44 +418,88 @@ export default class Game {
       `rgba(255, 255, 255, ${0.005 * this.shield * this.shieldAnim})`
     );
     gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, this.height - 50, this.width, 50);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, this.height - 50, this.width, 51);
+    ctx.restore();
 
-    this.ctx.fillStyle = "white";
-    this.ctx.font = `12pt "Courier"`;
-    this.ctx.fillText("SHIELD " + this.shield.toFixed(0), 20, this.height - 20);
-    this.ctx.fillText(
+    ctx.save();
+    ctx.fillStyle = "white";
+    ctx.font = `12pt "Courier"`;
+    ctx.fillText("SHIELD " + this.shield.toFixed(0), 20, this.height - 20);
+    ctx.fillText(
       "TAIL " + (this.snake.length - this.snakeMinLength).toFixed(0),
       150,
       this.height - 20
     );
 
-    this.ctx.textAlign = "right";
-    this.ctx.fillText("SCORE " + this.score, this.width - 20, this.height - 20);
-    this.ctx.fillText(
+    ctx.textAlign = "right";
+    ctx.fillText("SCORE " + this.score, this.width - 20, this.height - 20);
+    ctx.fillText(
       "TIME " + (this.timeLimit - this.time).toFixed(0),
       this.width - 150,
       this.height - 20
     );
-    this.ctx.fillText(
-      "STAGE " + this.stage,
-      this.width - 240,
-      this.height - 20
-    );
+    ctx.fillText("STAGE " + this.stage, this.width - 240, this.height - 20);
 
+    ctx.font = `24pt "Courier"`;
+    ctx.textAlign = "center";
     let art = this.artIn - (this.time % this.artIn);
     if (art > 1 && art < 3) {
-      this.ctx.fillStyle = `rgba(255, 0, 0, ${Math.sin(art * 10) * 0.5 + 0.5})`;
-      this.ctx.font = `24pt "Courier"`;
-      this.ctx.textAlign = "center";
-      this.ctx.fillText(
-        [...new Array(28)].map(() => "!").join(" "),
-        this.width / 2,
-        this.height - 70
-      );
+      ctx.fillStyle = `rgba(255, 0, 0, ${Math.sin(art * 10) * 0.5 + 0.5})`;
+      for (let i = 0; i < 20; i++) {
+        ctx.fillText(
+          "!",
+          ((this.width - 200) / 20) * i + 100,
+          this.height - 100
+        );
+      }
     }
 
-    this.ctx.restore();
+    if (this.flight) {
+      ctx.save()
+      ctx.translate(...this.ship);
+      ctx.scale(50, 50);
+
+      var grd = ctx.createRadialGradient(0, 0, 0, 0, 0, 2);
+      grd.addColorStop(0.799, `rgba(255,255,255,0)`);
+      grd.addColorStop(0.8, "white");
+      grd.addColorStop(1, `rgba(255,255,255,0)`);
+      ctx.fillStyle = grd;
+      ctx.fillRect(-2, -2, 4, 4);
+
+      ctx.lineWidth = 0.05;
+      ctx.beginPath();
+      ctx.moveTo(0, 0.9);
+      ctx.quadraticCurveTo(1, 0.5, 0, -1.2);
+      ctx.quadraticCurveTo(-1, 0.5, 0, 0.9);
+      ctx.moveTo(-0.7, 1);
+      ctx.quadraticCurveTo(0, 0, 0.7, 1);
+      ctx.quadraticCurveTo(0, 0.5, -0.7, 1);
+      ctx.stroke();
+      
+      ctx.beginPath()
+      ctx.moveTo(0,1);
+      ctx.fillStyle = `rgba(255,255,255,${0.6 + 0.1 * Math.sin(this.time*30)})`
+      let bottom = this.flight/100 * 3 + 0.05 * Math.sin(this.time*21);
+      ctx.quadraticCurveTo(0.5, 1.2, 0, 1 + bottom);
+      ctx.quadraticCurveTo(-0.5, 1.2, 0, 1);
+      ctx.fill();
+
+      ctx.scale(0.3, 0.3);
+      ctx.translate(0, -0.1);
+      ctx.beginPath();
+      ctx.moveTo(1, 0);
+      ctx.quadraticCurveTo(1, 1, 0, 1);
+      ctx.quadraticCurveTo(-1, 1, -1, 0);
+      ctx.quadraticCurveTo(-0.8, -1.5, 0, -1.5);
+      ctx.quadraticCurveTo(0.8, -1.5, 1, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (this.text) this.text.draw();
+
+    ctx.restore();
 
     for (let fx of this.fx) fx.draw();
 
@@ -367,7 +535,7 @@ export default class Game {
   }
 
   get timeLimit() {
-    return 40 + this.stage * 20;
+    return (40 + this.stage * 20) * (this.lastUnlock >= Game.U_LNGSTG?1.5:1);
   }
 }
 

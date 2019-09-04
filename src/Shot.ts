@@ -7,7 +7,7 @@ import { bounce as bounceFx } from "./Sound";
 import Explosion from "./Explosion";
 import Foe from "./Foe";
 
-const shotLength = 30;
+const shotLength = 35;
 const shotDots = 6;
 
 /*let glow = canvasCache([20, 20], ctx => {
@@ -50,7 +50,7 @@ export default class Shot {
     let tail = this.tail;
     let head = tail.head;
 
-    if (head[1] > this.game.height){
+    if (head[1] > this.game.height && !this.game.flight){
       if(this.phantom){
         return false;
       }
@@ -65,6 +65,11 @@ export default class Shot {
       head[1] > this.game.height
     ) {
       return false;
+    }
+
+    if(this.game.ship){
+      if(v2.dist(head, this.game.ship)<100)
+        return false;
     }
 
     let next = v2.sum(head, tail.vel, dTime);
@@ -125,6 +130,7 @@ export default class Shot {
     if(!this.phantom){
       //ctx.drawImage(glow, head[0] - 10, head[1] - 10);
       ctx.fillStyle = `rgba(${this.color}, 0.3)`;
+      //ctx.fillStyle = `rgba(0,0,255,0.5)`
       for(let i=0;i<(this.bounces?2:1);i++){
         ctx.beginPath();
         ctx.arc(head[0], head[1], 5, 0, Math.PI * 2);

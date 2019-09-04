@@ -91,7 +91,7 @@ function forwardAndBack(foe: Foe) {
   ) {
     foe.vel[0] = -foe.vel[0];
   }
-  if (foe.at[1] >= foe.wing.game.height - 300 && foe.vel[1] > 0) {
+  if (!foe.game.flight && foe.at[1] >= foe.wing.game.height - 300 && foe.vel[1] > 0) {
     foe.vel[1] = -foe.vel[1];
   }
 }
@@ -170,7 +170,7 @@ export default class Wing {
       this.conf = {
         cols: 1,
         rows: 1,
-        kind: game.time<20?Wing.skirmishUnlocks[game.stage]:randomElement(
+        kind: game.time<20&&Wing.skirmishUnlocks[game.stage]?Wing.skirmishUnlocks[game.stage]:randomElement(
           Wing.skirmishUnlocks.slice(1, game.stage + 1),
           game.rni
         ),
@@ -188,7 +188,7 @@ export default class Wing {
         foeBeat: formationFire,
         foeThink: forwardAndBack
       };
-      if (game.time<20 || game.complicatedPhalanx()) {
+      if (game.time<20&&Wing.phalanxUnlocks[game.stage] || game.complicatedPhalanx()) {
         this.conf.complication = game.time<20?Wing.phalanxUnlocks[game.stage]:randomElement(
           Wing.phalanxUnlocks.slice(1, game.stage + 1),
           game.rni
