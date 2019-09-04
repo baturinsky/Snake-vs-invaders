@@ -105,7 +105,7 @@ export default class Game {
 
   static readonly stageNames = [
     "",
-    "In Media Res",
+    "In Medias Res",
     "Rainy",
     "Wall",
     "Mirage",
