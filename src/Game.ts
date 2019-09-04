@@ -85,7 +85,7 @@ export default class Game {
   tweens = new Tweens(0);
   beatLength = 3;
   beat = 0;
-  shieldRecharge = [0.15, 0.7];
+  shieldRecharge = [0.2, 1];
   snakeRecoverRate = 0.5;
   maxShield = 50;
   shield: number;
@@ -246,7 +246,7 @@ export default class Game {
     if (!this.mouseAt) return;
 
     this.complication =
-      1.5 *
+      2 *
       (this.time / 30 + this.stage) *
       (0.4 + (0.6 * this.shield) / this.maxShield);
 
