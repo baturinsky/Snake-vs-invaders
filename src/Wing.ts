@@ -54,31 +54,34 @@ function centered(wing: Wing, i: number) {
   };
 }
 
-function formationFire(beat: number, foe: Foe) {
+function formationFire(beat: number, foe: Foe) {  
   let conf = foe.wing.conf;
-  if (
-    beat % (conf.rows + 1) == conf.rows ||
-    Math.floor(foe.order / conf.cols) == conf.rows - (beat % (conf.rows + 1))
-  ) {
+  let b = beat % (conf.rows + 1);
+  let allFiring = b == conf.rows;
+  let rowFiring = conf.rows - b;
+  let myRow = Math.floor(foe.order / conf.cols);
+  //console.log(beat, foe.order, myRow, rowFiring);
+  if (myRow == rowFiring || allFiring) {
     foe.shoot();
   }
 }
 
 function randomFire(beat: number, foe: Foe) {
-  if(foe.game.rni() % 4){
-    foe.game.delayed(foe.game.beatLength * foe.game.rnf(), () => foe.shoot())
+  if (foe.game.rni() % 4) {
+    foe.game.delayed(foe.game.beatLength * foe.game.rnf(), () => foe.shoot());
   }
 }
 
 function continuousFire(beat: number, foe: Foe) {
-  if(beat%4){
-    foe.game.delayed(foe.game.beatLength * 2 * foe.order / foe.wing.size, () => foe.shoot())
+  if (beat % 4) {
+    foe.game.delayed(
+      (foe.game.beatLength * 2 * foe.order) / foe.wing.size,
+      () => foe.shoot()
+    );
   }
 }
 
-
-function doNothing(beat: number, foe: Foe) {
-}
+function doNothing(beat: number, foe: Foe) {}
 
 function beat2Fire(beat: number, foe: Foe) {
   if (beat % 2 == 0) foe.shoot();
@@ -91,12 +94,16 @@ function forwardAndBack(foe: Foe) {
   ) {
     foe.vel[0] = -foe.vel[0];
   }
-  if (!foe.game.flight && foe.at[1] >= foe.wing.game.height - 300 && foe.vel[1] > 0) {
+  if (
+    !foe.game.flight &&
+    foe.at[1] >= foe.wing.game.height - 300 &&
+    foe.vel[1] > 0
+  ) {
     foe.vel[1] = -foe.vel[1];
   }
 }
 
-function allRetreat(foe:Foe){
+function allRetreat(foe: Foe) {
   foe.vel = [0, -100];
 }
 
@@ -156,7 +163,6 @@ export default class Wing {
     Foe.COMM
   ];
 
-
   get size() {
     return this.conf.cols * this.conf.rows;
   }
@@ -170,10 +176,13 @@ export default class Wing {
       this.conf = {
         cols: 1,
         rows: 1,
-        kind: game.time<20&&Wing.skirmishUnlocks[game.stage]?Wing.skirmishUnlocks[game.stage]:randomElement(
-          Wing.skirmishUnlocks.slice(1, game.stage + 1),
-          game.rni
-        ),
+        kind:
+          game.time < 20 && Wing.skirmishUnlocks[game.stage]
+            ? Wing.skirmishUnlocks[game.stage]
+            : randomElement(
+                Wing.skirmishUnlocks.slice(1, game.stage + 1),
+                game.rni
+              ),
         init: centered,
         foeBeat: beat2Fire,
         foeThink: forwardAndBack
@@ -188,12 +197,18 @@ export default class Wing {
         foeBeat: formationFire,
         foeThink: forwardAndBack
       };
-      if (game.time<20&&Wing.phalanxUnlocks[game.stage] || game.complicatedPhalanx()) {
-        this.conf.complication = game.time<20?Wing.phalanxUnlocks[game.stage]:randomElement(
-          Wing.phalanxUnlocks.slice(1, game.stage + 1),
-          game.rni
-        );
-        
+      if (
+        (game.time < 20 && Wing.phalanxUnlocks[game.stage]) ||
+        game.complicatedPhalanx()
+      ) {
+        this.conf.complication =
+          game.time < 20
+            ? Wing.phalanxUnlocks[game.stage]
+            : randomElement(
+                Wing.phalanxUnlocks.slice(1, game.stage + 1),
+                game.rni
+              );
+
         switch (this.conf.complication) {
           case Wing.MIRAGE:
             this.conf.kind = Foe.MIRAGE;
@@ -212,12 +227,12 @@ export default class Wing {
             break;
           case Wing.CONTINUOUS:
             this.conf.foeBeat = continuousFire;
-            break;    
+            break;
           case Wing.PHALANX:
             this.conf.cols *= this.conf.rows;
             this.conf.rows = 1;
             break;
-          }
+        }
       }
     }
 
@@ -245,7 +260,7 @@ export default class Wing {
     this.foes = this.foes.filter(foe => !foe.dead);
   }
 
-  retreat(){
+  retreat() {
     this.conf.foeThink = allRetreat;
     this.conf.foeBeat = doNothing;
   }

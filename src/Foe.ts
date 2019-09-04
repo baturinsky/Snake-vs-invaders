@@ -39,7 +39,7 @@ export default class Foe {
   static readonly SNAKE = 12;
   static readonly RIGGED = 13;
 
-  static readonly colors = "fff fff aaa 0f0 00f ff0 ffe 08f f00 f08 f0f 008 fff faa"
+  static readonly colors = "fff fff aaa 0f0 0ff ff0 ffe 08f f00 f08 f0f 008 fff faa"
     .split(" ")
     .map(s => s.split("").map(n => parseInt(n, 16) * 17));
 
@@ -68,12 +68,14 @@ export default class Foe {
     ctx.rotate(this.angle);
 
     if (!this.dying) {
-      ctx.fillStyle = `rgba(${this.colorString},${Math.max(
-        this.charge / 2,
-        0
-      )})`;
-      ctx.shadowColor = `rgba(${this.colorString})`;
-      ctx.shadowBlur = 5;
+      let fill = Math.max(this.charge / 2, 0);
+      if(this.kind == Foe.BOMB && this.charge >= 0.90)
+        fill = 10 - this.charge*10;
+      ctx.fillStyle = `rgba(${this.colorString},${fill})`;
+      if (!this.game.potato) {
+        ctx.shadowColor = `rgba(${this.colorString})`;
+        ctx.shadowBlur = 5;
+      }
       ctx.lineWidth = 0.1;
 
       if (Foe.MIRAGE != this.kind) {
@@ -128,7 +130,7 @@ export default class Foe {
         for (let i = 0; i < 3; i++) {
           ctx.moveTo(0, 1);
           ctx.lineTo(0, 0.5);
-          ctx.rotate(Math.PI * 2 / 3);
+          ctx.rotate((Math.PI * 2) / 3);
         }
         return;
       case Foe.WALL:
@@ -198,8 +200,7 @@ export default class Foe {
   }
 
   actuallyShoot() {
-    if(this.dying)
-      return;
+    if (this.dying) return;
     switch (this.kind) {
       case Foe.SPAWN:
         if (this.special) {
@@ -267,7 +268,7 @@ export default class Foe {
   }
 
   update(dTime: number) {
-    if(this.game.ship && v2.dist(this.at, this.game.ship)<120){
+    if (this.game.ship && v2.dist(this.at, this.game.ship) < 120) {
       this.explode();
     }
 
@@ -290,7 +291,8 @@ export default class Foe {
     let next = v2.sum(this.at, this.vel, dTime);
     this.at = next;
 
-    if (this.at[1] < -20 && this.vel[1] < 0 || this.at[1]>=this.game.height) this.remove();
+    if ((this.at[1] < -20 && this.vel[1] < 0) || this.at[1] >= this.game.height)
+      this.remove();
   }
 
   get dead() {
@@ -301,9 +303,14 @@ export default class Foe {
     if (this.charge > 0 || this.kind == Foe.WALL || this.at[0] < 0) return;
 
     if (
-      [Foe.PAWN, Foe.MIRAGE, Foe.SNIPE, Foe.STEALTH, Foe.SNAKE, Foe.RIGGED].includes(
-        this.kind
-      )
+      [
+        Foe.PAWN,
+        Foe.MIRAGE,
+        Foe.SNIPE,
+        Foe.STEALTH,
+        Foe.SNAKE,
+        Foe.RIGGED
+      ].includes(this.kind)
     )
       this.game.tweens.add(
         this,
@@ -324,7 +331,7 @@ export default class Foe {
   }
 
   explode() {
-    if (this.dying) return;      
+    if (this.dying) return;
 
     this.remove();
     this.game.score += Math.floor(
@@ -348,10 +355,11 @@ export default class Foe {
   }
 
   damage() {
-    if (this.kind == Foe.RIGGED){
-      let angle = this.game.rnf() * Math.PI * 2;
-      console.log(angle);
-      this.game.delayed(0.01, () => {new Shot(this.game, this.at, Math.PI, this.colorString)});
+    if (this.kind == Foe.RIGGED) {
+      let angle = Math.random() * Math.PI * 2;
+      this.game.delayed(0.01, () => {
+        new Shot(this.game, this.at, angle, this.colorString);
+      });
     }
 
     if (this.shields > 0) {

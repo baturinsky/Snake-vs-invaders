@@ -12,7 +12,7 @@ import { talkAll } from "./lang";
 
 function parseTalk(stage) {
   let lines = talkAll.split("\n\n")[stage].split("\n");
-  let side = lines[0].search("sir") >= 0 ? 2 : 1;
+  let side = lines[0].search("[s|S]ir") >= 0 ? 2 : 1;
   let talk: [number, string][] = [];
   for (let line of lines) {
     if (line.charAt(0) == "*") {
@@ -51,12 +51,14 @@ class MovingText {
     ctx.font = `12pt "Courier"`;
     ctx.textAlign = "center";
     let y = 0;
+    let l = 0;
     for (let line of this.text.split("|")) {
       ctx.fillText(
-        line.trim().substr(0, Math.floor(this.time * 100)),
+        line.trim().substr(0, Math.floor(this.time * 70) - l),
         this.at[0],
         this.at[1] + y
       );
+      l += line.length;
       y += 20;
     }
     ctx.restore();
@@ -71,7 +73,6 @@ export default class Game {
   fx: FX[];
   width: number;
   height: number;
-  scale = 1;
   fxScale = 0.5;
   ctx: CanvasRenderingContext2D;
   ctb: CanvasRenderingContext2D;
@@ -84,7 +85,7 @@ export default class Game {
   tweens = new Tweens(0);
   beatLength = 3;
   beat = 0;
-  shieldRecharge = [0.3, 1];
+  shieldRecharge = [0.15, 0.7];
   snakeRecoverRate = 0.5;
   maxShield = 50;
   shield: number;
@@ -100,6 +101,7 @@ export default class Game {
   text: MovingText;
   flight = 0;
   ship: V2;
+  potato = false;
 
   static readonly stageNames = [
     "",
@@ -124,7 +126,7 @@ export default class Game {
     "artillery",
     "chain reaction",
     "+100% artillery",
-    "!escape ship!",
+    "! escape ship !",
     "longer stages",
     "more enemies"
   ];
@@ -150,6 +152,9 @@ export default class Game {
     public updateUI: Function,
     public lastUnlock: number
   ) {
+
+    this.potato = navigator.userAgent.search("Chrome") < 0;
+
     if (lastUnlock >= Game.U_SHIELD) this.maxShield += 50;
 
     if (lastUnlock >= Game.U_ARTILL) this.artIn = 40;
@@ -159,10 +164,8 @@ export default class Game {
     if (this.stage == 10) this.flight = 0.01;
 
     this.talk = parseTalk(this.stage - 1);
-    console.log(this.talk);
 
     this.init();
-    console.log(Foe.colors);
   }
 
   sendPhalanx(wingInd: number) {
@@ -175,7 +178,7 @@ export default class Game {
   }
 
   rnf() {
-    return (this.rni() % 1e9) / 1e9;
+    return (this.rni() %1e9) / 1e9;
   }
 
   seed(n: number) {
@@ -189,16 +192,16 @@ export default class Game {
       let at;
       if (line[0] == 1)
         at = [
-          Math.min(this.width - 200, Math.max(200, this.snake.head[0])),
+          Math.min(this.width - 300, Math.max(300, this.snake.head[0])),
           Math.min(this.height - 200, this.snake.head[1] + 100)
         ];
-      else at = [this.width / 2, this.height - 100];
+      else at = [this.width / 2, this.height - 70];
 
       this.text = new MovingText(
         this,
         line[1],
         [`#88ff88`, `#cccccc`, `#8888ff`][line[0]],
-        2 + line[1].length / 12,
+        (line[0]?2:10) + line[1].length / 12,
         at,
         [[0, 0], [0, 10], [0, -10]][line[0]] as V2
       );
@@ -212,8 +215,8 @@ export default class Game {
 
     this.shield = this.maxShield;
 
-    this.width = this.canvas.clientWidth / this.scale;
-    this.height = this.canvas.clientHeight / this.scale;
+    this.width = this.canvas.clientWidth;
+    this.height = this.canvas.clientHeight;
     this.canvas.height = this.height;
     this.canvas.width = this.width;
 
@@ -244,10 +247,10 @@ export default class Game {
 
     this.complication =
       1.5 *
-      (this.time / 60 + this.stage) *
+      (this.time / 30 + this.stage) *
       (0.4 + (0.6 * this.shield) / this.maxShield);
 
-    this.beatLength = (4 * 20) / (20 + this.complication);
+    this.beatLength = (3 * 20) / (20 + this.complication);
 
     let snakeMove = v2.dist(this.mouseAt, this.snake.head);
     let snakeMoves = snakeMove >= 5;
@@ -275,9 +278,7 @@ export default class Game {
       dTime *= snakeMove / 20;
     }
 
-    let beatChanged =
-      Math.floor((this.time + dTime) / this.beatLength) !=
-      Math.floor(this.time / this.beatLength);
+    let beatChanged = false;
 
     this.time += dTime;
     this.beatTime += dTime;
@@ -289,7 +290,7 @@ export default class Game {
 
     this.seed(this.beat);
 
-    let wingBeats = this.lastUnlock>=Game.U_ENEMIS?[7,3]:[9,5]
+    let wingBeats = this.lastUnlock>=Game.U_ENEMIS?[5,2]:[7,3]
 
     if (this.time <= this.timeLimit) {
       if (beatChanged && this.beat % wingBeats[0] == 0) this.sendPhalanx(this.beat / 9);
@@ -395,12 +396,15 @@ export default class Game {
         this.ctb.fillRect(x,y,1,1);
       }
     } else {
-      //this.ctb.clearRect(0, 0, this.width, this.height);
-      this.ctb.fillStyle=`rgba(0,0,0,0.2)`;
-      this.ctb.fillRect(0, 0, this.width, this.height);
+      //if(this.potato){
+        this.ctb.clearRect(0, 0, this.width, this.height);
+      /*} else {
+        this.ctb.fillStyle=`rgba(0,0,0,0.2)`;
+        this.ctb.fillRect(0, 0, this.width, this.height);
+      }*/
     }
 
-    ctx.shadowColor = `white`;
+    //ctx.shadowColor = `white`;
 
     ctx.save();
 

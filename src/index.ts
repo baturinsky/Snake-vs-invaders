@@ -9,17 +9,20 @@ let bg: HTMLCanvasElement;
 let ui: HTMLElement;
 
 let scores: number[] = JSON.parse(
-  localStorage["snakeScore"] || "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]"
+  localStorage["snakeVsInvadersScore"] || "[0]"
 );
 function totalScore() {
   return scores.reduce((a, b) => a + b);
 }
 function lastUnlock() {
   let score = totalScore()
-  return score<6000?-1:Math.sqrt(totalScore() / 2000 - 2);
+  let u = score<6000?-1:Math.sqrt(totalScore() / 2000 - 2) - 1;
+  console.log(u);
+  return u;
 }
 
-function updateUI(g: Game) {
+function gameUpdated(g: Game) {
+  c.style.cursor = "default";
   game = g;
   if (!game) {
     c.getContext("2d").clearRect(0, 0, 1200, 800);
@@ -30,7 +33,7 @@ function updateUI(g: Game) {
 }
 
 function newGame(i: number) {
-  new Game(c, bg, i, updateUI, lastUnlock());
+  new Game(c, bg, i, gameUpdated, lastUnlock());
 }
 
 window["newGame"] = () => {
@@ -42,17 +45,19 @@ window["playStage"] = (i: number) => {
 };
 
 window["mainMenu"] = () => {
-  updateUI(null);
+  gameUpdated(null);
 };
 
 function stagesText() {
   let s = `<span>Stage</span><span>Score</span></br></br>`;
   for (let i = 1; i < Game.stageNames.length; i++) {
+    let clear = !!(i==1 || scores[i - 1]);
+    let needShip = i == 10 && lastUnlock()<Game.U_ROCKET;
     s += `<button ${
-      i == 1 || scores[i - 1] ? "" : "disabled"
+      clear && !needShip ? "" : "disabled"
     } onmousedown="window.playStage(${i})">${
       Game.stageNames[i]
-    }</button><span>${scores[i] || ""}</span><br/>`;
+    }</button><span>${(clear && needShip)?"Ship not found":(scores[i] || "")}</span><br/>`;
   }
   s += `<br/><span>Total Score:</span><span>${totalScore()}</span>`;
   return s;
@@ -95,13 +100,14 @@ Episode 2: Snake vs Invaders<br/><br/><br/><br/>
   if (loseReason) s += `<h1>GAME OVER</h1><br/><br/><br/>` + loseReason;
   else {
     s = `<h1>STAGE COMPLETE</h1><br/><br/><br/>Score:${game.score}</br>`;
-    if (game.score < scores[game.stage])
-      s += `Which is not more than the previous best: ${scores[game.stage]}`;
+    let prev = scores[game.stage] || 0
+    if (game.score < prev)
+      s += `Which is not more than the previous best: ${prev}`;
     else {
       s += `Which is more than the previous best.<br/>Your overall score is increased by +${game.score -
-        scores[game.stage]}`;
+        prev}`;
       scores[game.stage] = game.score;
-      localStorage.setItem("snakeScore", JSON.stringify(scores));
+      localStorage.setItem("snakeVsInvadersScore", JSON.stringify(scores));
     }
   }
 
@@ -122,7 +128,8 @@ window.onload = function() {
     e => {
       mouseAt = [e.pageX - c.offsetLeft, e.pageY - c.offsetTop];
       if (game) {
-        game.mouseAt = v2.scale(mouseAt, 1 / game.scale);
+        //game.mouseAt = v2.scale(mouseAt, 1 / game.scale);
+        game.mouseAt = mouseAt;
       }
     },
     false
@@ -149,9 +156,11 @@ window.onload = function() {
   });
 
   document.addEventListener("keydown", e => {
-    console.log(e);
     if (e.code == "KeyS") {
       window["newGame"]();
+    }
+    if (e.code == "Escape") {
+      gameUpdated(null)
     }
     if (e.code.substr(0, 5) == "Digit") {
       newGame(Number(e.code.substr(5)));
@@ -162,5 +171,5 @@ window.onload = function() {
     if (game && mouseInside) game.update(time);
   });
 
-  updateUI(game);
+  gameUpdated(game);
 };

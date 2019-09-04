@@ -15,12 +15,14 @@ export default class Explosion extends FX {
   color: number[] = [255, 255, 255];
   arc = Math.PI * 2;
   direction: number;
-  lifeTime = 1.5;
-  pnum = 30;
+  lifeTime = 1;
   pvel = 300;
+  pnum:number;
 
-  constructor(game: Game, public at: V2, options?: any) {
+  constructor(game: Game, public at: V2, options?: any) {    
     super(game);
+    this.pnum = this.game.potato?25:35;
+
     if (options) Object.assign(this, options);
     let scale = game.fxScale;
     for (let i = 0; i < this.pnum; i++) {
