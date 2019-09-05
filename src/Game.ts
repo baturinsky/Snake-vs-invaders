@@ -101,7 +101,7 @@ export default class Game {
   text: MovingText;
   flight = 0;
   ship: V2;
-  potato = false;
+  fancy = true;
 
   static readonly stageNames = [
     "",
@@ -153,7 +153,7 @@ export default class Game {
     public lastUnlock: number
   ) {
 
-    this.potato = navigator.userAgent.search("Chrome") < 0;
+    this.fancy = localStorage["snakeVsInvadersFancy"]=="true";
 
     if (lastUnlock >= Game.U_SHIELD) this.maxShield += 50;
 

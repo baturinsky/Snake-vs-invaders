@@ -8,12 +8,17 @@ let c: HTMLCanvasElement;
 let bg: HTMLCanvasElement;
 let ui: HTMLElement;
 
+if(!["true","false"].includes(localStorage["snakeVsInvadersFancy"]))
+  localStorage.setItem("snakeVsInvadersFancy", navigator.userAgent.search("Chrome") >=0?"true":"false")
+
 let scores: number[] = JSON.parse(
   localStorage["snakeVsInvadersScore"] || "[0]"
 );
+
 function totalScore() {
   return scores.reduce((a, b) => a + b);
 }
+
 function lastUnlock() {
   let score = totalScore()
   let u = score<6000?-1:Math.sqrt(totalScore() / 2000 - 2) - 1;
@@ -161,6 +166,12 @@ window.onload = function() {
     }
     if (e.code == "Escape") {
       gameUpdated(null)
+    }
+    if (e.code == "KeyF") {
+      let v = localStorage["snakeVsInvadersFancy"]=="true"?"false":"true";
+      localStorage.setItem("snakeVsInvadersFancy", v);
+      if(game)
+        game.fancy = v == "true";
     }
     if (e.code.substr(0, 5) == "Digit") {
       newGame(Number(e.code.substr(5)));

@@ -72,7 +72,7 @@ export default class Foe {
       if(this.kind == Foe.BOMB && this.charge >= 0.90)
         fill = 10 - this.charge*10;
       ctx.fillStyle = `rgba(${this.colorString},${fill})`;
-      if (!this.game.potato) {
+      if (this.game.fancy) {
         ctx.shadowColor = `rgba(${this.colorString})`;
         ctx.shadowBlur = 5;
       }

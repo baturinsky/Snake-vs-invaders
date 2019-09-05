@@ -21,7 +21,7 @@ export default class Explosion extends FX {
 
   constructor(game: Game, public at: V2, options?: any) {    
     super(game);
-    this.pnum = this.game.potato?25:35;
+    this.pnum = this.game.fancy?35:25;
 
     if (options) Object.assign(this, options);
     let scale = game.fxScale;
