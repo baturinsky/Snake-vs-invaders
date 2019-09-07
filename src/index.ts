@@ -30,7 +30,7 @@ function gameUpdated(g: Game) {
   c.style.cursor = "default";
   game = g;
   if (!game) {
-    c.getContext("2d").clearRect(0, 0, 1200, 800);
+    c.getContext("2d").clearRect(0, 0, 1200, 1200);
   }
   let text = overText(game);
   ui.innerHTML = text;
@@ -102,7 +102,15 @@ Episode 2: Snake vs Invaders<br/><br/><br/><br/>
     else if (game.shield < 0) loseReason = "Planetary shields depleted";
   }
 
-  if (loseReason) s += `<h1>GAME OVER</h1><br/><br/><br/>` + loseReason;
+  if(game.stage ==1 && loseReason){
+    loseReason += 
+    `<br/><br/>
+    <p style="color:gray">Sorry for not stating game's rules clear or timely enough.</br>Allow me to remind them to you:</p>
+    <p>Control Sir Snake with mouse movement to deflect bullets BACK at enemies.</br>
+    Do not let bullets hit the Planetary Shield at the bottom of the screen.</p>`
+  }
+
+  if (loseReason) s += `<h1>GAME OVER</h1><br/>` + loseReason;
   else {
     s = `<h1>STAGE COMPLETE</h1><br/><br/><br/>Score:${game.score}</br>`;
     let prev = scores[game.stage] || 0
@@ -116,7 +124,7 @@ Episode 2: Snake vs Invaders<br/><br/><br/><br/>
     }
   }
 
-  s += `<br/><br/><br/>`;
+  s += `<br/><br/>`;
   if (loseReason)
     s += `<button onmousedown="window.newGame()">Restart</button>`;
   s += `<button onmousedown="window.mainMenu()">Back to Menu</button>`;

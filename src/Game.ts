@@ -85,9 +85,9 @@ export default class Game {
   tweens = new Tweens(0);
   beatLength = 3;
   beat = 0;
-  shieldRecharge = [0.3, 1.2];
+  shieldRecharge = [0.3, 2];
   snakeRecoverRate = 0.5;
-  maxShield = 50;
+  maxShield = 100;
   shield: number;
   shieldAnim = 1;
   score = 0;
@@ -201,7 +201,7 @@ export default class Game {
         this,
         line[1],
         [`#88ff88`, `#cccccc`, `#8888ff`][line[0]],
-        (line[0]?2:10) + line[1].length / 12,
+        (line[0]?2:this.stage==1?1000:10) + line[1].length / 12,
         at,
         [[0, 0], [0, 10], [0, -10]][line[0]] as V2
       );
@@ -250,7 +250,7 @@ export default class Game {
       (this.time / 30 + this.stage) *
       (0.3 + (0.7 * this.shield) / this.maxShield);
 
-    this.beatLength = (3 * 20) / (20 + this.complication);
+    this.beatLength = (4 * 10) / (10 + this.complication);
 
     let snakeMove = v2.dist(this.mouseAt, this.snake.head);
     let snakeMoves = snakeMove >= 5;
@@ -417,11 +417,13 @@ export default class Game {
       this.height - 50
     );
 
+    let shieldColor = `255, ${this.shield/this.maxShield*255}, ${(2 * this.shield/this.maxShield-1)*255}`;
+
     gradient.addColorStop(
       0,
-      `rgba(255, 255, 255, ${0.005 * this.shield * this.shieldAnim})`
+      `rgba(${shieldColor}, ${0.5*this.shieldAnim})`
     );
-    gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+    gradient.addColorStop(1, `rgba(${shieldColor}, 0)`);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, this.height - 50, this.width, 51);
     ctx.restore();
@@ -539,7 +541,7 @@ export default class Game {
   }
 
   get timeLimit() {
-    return (40 + this.stage * 20) * (this.lastUnlock >= Game.U_LNGSTG?1.5:1);
+    return (60 + this.stage * 20) * (this.lastUnlock >= Game.U_LNGSTG?1.5:1);
   }
 }
 

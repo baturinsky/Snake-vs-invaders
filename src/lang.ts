@@ -5,7 +5,7 @@ Shields will not hold against concentrated attack for long.| If we'd have guns w
 Well, THEIR guns ARE working.
 You say it like it's a good thing.
 I think I have an idea, Colonel...
-*Control Sir Snake with mouse movement to deflect enemy projectiles BACK at them.| Do not let them hit the Planetary Shield at the bottom of the screen.
+*Control Sir Snake with mouse movement to deflect bullets BACK at enemies.| Do not let bullets hit the Planetary Shield at the bottom of the screen.
 
 I can't believe it worked, sir.| Why do they keep shooting, even if they see they kill themselves?
 Those are drones with a pretty simple programming, Colonel.| And whoever commands them is probably not much smarter,| attacking Imperial outpost like this.
