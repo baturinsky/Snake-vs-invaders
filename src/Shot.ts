@@ -27,7 +27,7 @@ const shotDots = 6;
 export default class Shot {
   tail: Tail;
   bounces = 0;
-  phantom?: boolean;
+  fake?: boolean;
   hp:number;
   color = "255,255,255"
 
@@ -51,7 +51,7 @@ export default class Shot {
     let head = tail.head;
 
     if (head[1] > this.game.height && !this.game.flight){
-      if(this.phantom){
+      if(this.fake){
         return false;
       }
       new Explosion(this.game, head, {color:[255,0,0]});
@@ -75,7 +75,7 @@ export default class Shot {
     let next = v2.sum(head, tail.vel, dTime);
     let bounceNormal: V2;
 
-    if (this.bounces > 0 && !this.phantom) {
+    if (this.bounces > 0 && !this.fake) {
       let foeHit = this.game.foeHit(next);
       if (foeHit) {
         if (foeHit.kind == Foe.WALL) {
@@ -127,7 +127,7 @@ export default class Shot {
 
     let head = v2.round(this.tail.head);
 
-    if(!this.phantom){
+    if(!this.fake){
       //ctx.drawImage(glow, head[0] - 10, head[1] - 10);
       ctx.fillStyle = `rgba(${this.color}, 0.3)`;
       //ctx.fillStyle = `rgba(0,0,255,0.5)`

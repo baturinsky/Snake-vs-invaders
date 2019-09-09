@@ -3,27 +3,27 @@ export class Tween {
   onEnd: () => void;
 
   constructor(
-    public object: any,
-    public field: string,
-    public target: number,
-    public duration: number,
-    public initialTime: number,
+    public obj: any,
+    public key: string,
+    public to: number,
+    public dur: number,
+    public start: number,
     public fun?: (number) => number
   ) {
-    this.initial = object[field];
+    this.initial = obj[key];
   }
 
   update(time: number): boolean {
-    let level = (time - this.initialTime) / this.duration;
+    let level = (time - this.start) / this.dur;
     if (level >= 1) {
-      this.object[this.field] = this.target;
+      this.obj[this.key] = this.to;
       if(this.onEnd)
         this.onEnd();
       return false;
     } else {
       if (this.fun) level = this.fun(level);
-      this.object[this.field] =
-        this.initial + (this.target - this.initial) * level;
+      this.obj[this.key] =
+        this.initial + (this.to - this.initial) * level;
     }
     return true;
   }

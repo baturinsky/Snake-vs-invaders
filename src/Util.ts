@@ -12,7 +12,7 @@ export function min<T>(list: T[], fn: (T) => number) {
     return { ind: minI, item: list[minI], val: minV };
 }
 
-export function canvasCache(
+/*export function canvasCache(
   size: [number, number],
   draw: (ctx: CanvasRenderingContext2D) => void
 ) {
@@ -22,7 +22,7 @@ export function canvasCache(
   const ctx = canvas.getContext("2d");
   draw(ctx);
   return canvas;
-}
+}*/
 
 export function randomElement<T>(list:T[], rni:() => number){
   return list[rni() % list.length]

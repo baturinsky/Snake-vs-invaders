@@ -165,7 +165,7 @@ export default class Foe {
         }
         return;
       case Foe.MIRAGE:
-        if (this.phantom && Math.random() < 0.005) {
+        if (this.fake && Math.random() < 0.005) {
           ctx.strokeStyle = `rgba(${this.colorString},0.5)`;
         }
         ctx.moveTo(0, 1);
@@ -228,7 +228,7 @@ export default class Foe {
         break;
       case Foe.MIRAGE:
         let shot = new Shot(this.game, this.at, this.angle, this.colorString);
-        if (this.phantom) shot.phantom = true;
+        if (this.fake) shot.fake = true;
         break;
       case Foe.BOMB:
         for (let i = 0; i < 16; i++) {
@@ -325,8 +325,8 @@ export default class Foe {
   remove() {
     if (this.dying) return;
     this.dying = 0.01;
-    if (this.kind == Foe.MIRAGE && !this.phantom) {
-      for (let f of this.wing.foes) if (f.phantom) f.remove();
+    if (this.kind == Foe.MIRAGE && !this.fake) {
+      for (let f of this.wing.foes) if (f.fake) f.remove();
     }
   }
 
@@ -350,7 +350,7 @@ export default class Foe {
     return v2.dist(a, this.at) <= this.outerRadius ? a : null;
   }
 
-  get phantom() {
+  get fake() {
     return this.kind == Foe.MIRAGE && !this.special;
   }
 

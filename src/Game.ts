@@ -85,7 +85,7 @@ export default class Game {
   tweens = new Tweens(0);
   beatLength = 3;
   beat = 0;
-  shieldRecharge = [0.3, 2];
+  shieldRecharge = [0.2, 1.5];
   snakeRecoverRate = 0.5;
   maxShield = 100;
   shield: number;
@@ -518,7 +518,7 @@ export default class Game {
 
   foeHit(at: V2): Foe {
     let list = this.foes.filter(
-      foe => !foe.dying && !foe.phantom && foe.hitTest(at)
+      foe => !foe.dying && !foe.fake && foe.hitTest(at)
     );
 
     if (list.length > 0) {

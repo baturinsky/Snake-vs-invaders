@@ -37,10 +37,10 @@ Not at the time frame we have.| On the plus side, emission drops with shield's l
 There is no end of them, sir.| It's miracle we are still holding.
 What else can we do?
 Well...| With some time and spare parts I can maybe hack up an escape ship.
-Looks like the best chance so far.| For us and... THAT| Make sure it's shielded well enough to break through blocade.
-*Collect enough resources (i.e. score) for the escape ship.| You can replay previous stages for that if necessary.| But only max score per stage counts.
+Looks like the best chance so far.| For us and... THAT.| Make sure it's shielded well enough to break through blocade.
+*Collect enough resources (i.e. score) for the escape ship.| Only max score per stage counts.
 
-I have caught some broadcasts, sir.| Something bad on global scale is happening.| Circarians attack everywhere. And Empress is nowhere to be seen.
+I have caught some broadcasts, sir.| Circarians attack everywhere. And Empress is nowhere to be seen.
 That confirms my worst suspicions. Try to find out more.
 *ESC takes you back to menu.
 
@@ -52,11 +52,11 @@ Awfully convenient, isn't it.| Speed up on that ship.
 We did it, Colonel.
 [Happy Snake Noises]
 *Escape Ship is on the way from the doomed planet.
-*Bringing our heroes and the mysterious McGuffin to the Episode 3 of the Flight of the Snake saga.
-*I had no bytes left for any music,|but imagine anything from Space Rangers 2 OST playing now.
+*Bringing our heroes and the mysterious McGuffin to the Episode 3.
+*Imagine anything from Space Rangers 2 OST playing now.
 *If it's not obvious enough, you have won the game.
-*This level is just an interactive ending cinematic, basically.
-*But you still get points for it! Heh heh...
+*This level is just an interactive ending cinematic.
+*But you still get points for it!
 *If you wonder, no, there is no Episode 1.
 *Yet.
 *Thanks for playing! And please, leave feedback.
