@@ -2,6 +2,9 @@
 *.zip
 *.avi
 *.mp4
+*.exe
+
+Screenshot*
 
 .rpt2_cache
 

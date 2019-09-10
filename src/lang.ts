@@ -20,7 +20,7 @@ Too bad. I manage so far, but I can't be everywhere at once.
 By the way, sir, I can use the scrap from those drones to repair some of our facilities.
 So, the more of them I break, the faster we'll be back online?
 Basically. And try not to put too much strain on shields.| I need energy for repairs too.
-*Score is given for each destroyed enemy.| You get more if shield level is high. Score unlocks upgrades.
+*Score is given for each destroyed enemy.| You get more when shield level is high. Score unlocks upgrades.
 
 I'm starting to think it's not a random raid.| They are after THAT.
 But only three snakes know THAT is here, sir.
@@ -53,7 +53,7 @@ We did it, Colonel.
 [Happy Snake Noises]
 *Escape Ship is on the way from the doomed planet.
 *Bringing our heroes and the mysterious McGuffin to the Episode 3.
-*Imagine anything from Space Rangers 2 OST playing now.
+*I have no bytes left for music, but imagine anything from Space Rangers 2 OST playing now.
 *If it's not obvious enough, you have won the game.
 *This level is just an interactive ending cinematic.
 *But you still get points for it!

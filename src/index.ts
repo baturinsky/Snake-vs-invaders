@@ -8,8 +8,8 @@ let c: HTMLCanvasElement;
 let bg: HTMLCanvasElement;
 let ui: HTMLElement;
 
-if(!["true","false"].includes(localStorage["snakeVsInvadersFancy"]))
-  localStorage.setItem("snakeVsInvadersFancy", navigator.userAgent.search("Chrome") >=0?"true":"false")
+/*if(!["true","false"].includes(localStorage["snakeVsInvadersFancy"]))
+  localStorage.setItem("snakeVsInvadersFancy", navigator.userAgent.search("Chrome") >=0?"true":"false")*/
 
 let scores: number[] = JSON.parse(
   localStorage["snakeVsInvadersScore"] || "[0]"
@@ -175,12 +175,12 @@ window.onload = function() {
     if (e.code == "Escape") {
       gameUpdated(null)
     }
-    if (e.code == "KeyF") {
+    /*if (e.code == "KeyF") {
       let v = localStorage["snakeVsInvadersFancy"]=="true"?"false":"true";
       localStorage.setItem("snakeVsInvadersFancy", v);
       if(game)
         game.fancy = v == "true";
-    }
+    }*/
     if (e.code.substr(0, 5) == "Digit") {
       newGame(Number(e.code.substr(5)));
     }
